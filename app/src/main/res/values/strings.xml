@@ -1,12 +1,17 @@
 <resources>
     <string name="app_name">Wip Mobile</string>
-    <string name="title_activity_login">LoginActivity</string>
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="welcome">"Welcome !"</string>
-    <string name="invalid_username">Not a valid username</string>
-    <string name="invalid_password">Password must be >5 characters</string>
-    <string name="login_failed">"Login failed"</string>
+    <string name="title_activity_login">Выполни вход</string>
+    <string name="prompt_login">Логин</string>
+    <string name="prompt_password">Пароль</string>
+    <string name="cd_password_visibility_show">Показать пароль</string>
+    <string name="cd_password_visibility_hide">Скрыть пароль</string>
+    <string name="login_in_button_label">Войти</string>
+    <string name="login_error_dialog_title">Ошибка входа</string>
+    <string name="login_error_dialog_default_message">Неизвестно что случилось</string>
+    <string name="login_error_dialog_ok">Ок</string>
+
+    <string name="login_screen_title">Вход</string>
+    <string name="model_list_screen_title">Список моделей</string>
+    <string name="back_button">Назад</string>
+
 </resources>
