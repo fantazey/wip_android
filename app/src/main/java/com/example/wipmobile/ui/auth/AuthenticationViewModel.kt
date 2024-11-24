@@ -1,5 +1,6 @@
 package com.example.wipmobile.ui.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wipmobile.data.AuthenticationUiState
@@ -30,6 +31,22 @@ class AuthenticationViewModel @Inject constructor(
             is AuthenticationEvent.ClearError -> {
                 clearError()
             }
+            is AuthenticationEvent.CheckAuthentication -> {
+                checkToken(event.successCallback)
+            }
+        }
+    }
+
+    private fun checkToken(callback: () -> Unit) {
+        Log.i("auth vm", "check token exists")
+        viewModelScope.launch(Dispatchers.IO) {
+            if (userRepository.isUserLogged()) {
+                Log.i("auth vm", "user repo check success")
+                uiState.value = uiState.value.copy(isLoading = false, authenticated = true)
+            }
+        }
+        if (uiState.value.authenticated) {
+            callback()
         }
     }
 

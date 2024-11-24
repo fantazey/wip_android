@@ -1,5 +1,6 @@
 package com.example.wipmobile.data.source.remote.api
 
+import android.util.Log
 import com.example.wipmobile.data.source.local.AccessTokenWrapper
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -10,7 +11,8 @@ class AuthInterceptor @Inject constructor(
 ): Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val initialRequest = chain.request()
-        val authRequestBuilder = initialRequest.newBuilder().addHeader("Authoriazation", "Token " + accessTokenWrapper.getAccessToken()!!.token)
+        Log.i("auth interceptor", "token is: " + accessTokenWrapper.getAccessToken()!!.token)
+        val authRequestBuilder = initialRequest.newBuilder().addHeader("Authorization", "Token " + accessTokenWrapper.getAccessToken()!!.token)
         return chain.proceed(authRequestBuilder.build())
     }
 }

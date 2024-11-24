@@ -1,4 +1,8 @@
 package com.example.wipmobile.data.model
 
-class Model {
-}
+data class Model(
+    val id: Int,
+    val name: String,
+    val userStatus: Int,
+    val imagePath: String?
+)

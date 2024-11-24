@@ -1,5 +1,6 @@
 package com.example.wipmobile.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,6 +21,9 @@ fun AuthenticationScreen(
     handleEvent: (event: AuthenticationEvent) -> Unit,
     successAuthCallback: () -> Unit
 ) {
+    Log.i("auth screen", "check auth")
+    handleEvent(AuthenticationEvent.CheckAuthentication(successAuthCallback))
+    Log.i("auth screen", "render form")
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center

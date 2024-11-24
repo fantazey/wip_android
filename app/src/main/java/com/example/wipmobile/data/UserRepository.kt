@@ -16,7 +16,7 @@ class UserRepository @Inject constructor(
         }
     }
 
-    fun userLogged(): Boolean {
+    fun isUserLogged(): Boolean {
         return accessTokenWrapper.getAccessToken() != null
     }
 }

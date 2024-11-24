@@ -25,7 +25,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.wipmobile.ui.AuthenticationScreen
+import com.example.wipmobile.ui.ModelsScreen
 import com.example.wipmobile.ui.auth.AuthenticationViewModel
+import com.example.wipmobile.ui.models.ModelsViewModel
 
 enum class WipScreen(@StringRes val title: Int) {
     Authentication(R.string.login_screen_title),
@@ -61,6 +63,7 @@ fun WipAppBar(
 @Composable
 fun WipApp(
     authenticationViewModel: AuthenticationViewModel = viewModel(),
+    modelsViewModel: ModelsViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -76,7 +79,8 @@ fun WipApp(
             )
         }
     ) { innerPadding ->
-        val uiState by authenticationViewModel.uiState.collectAsState()
+        val authUiState by authenticationViewModel.uiState.collectAsState()
+        val modelsUiState by modelsViewModel.uiState.collectAsState()
         NavHost(
             navController=navController,
             startDestination = WipScreen.Authentication.name,
@@ -84,7 +88,7 @@ fun WipApp(
         ) {
             composable(route = WipScreen.Authentication.name) {
                 AuthenticationScreen(
-                    authenticationState = uiState,
+                    authenticationState = authUiState,
                     successAuthCallback = {
                         navController.navigate(WipScreen.Models.name)
                     },
@@ -95,7 +99,12 @@ fun WipApp(
                 )
             }
             composable(route = WipScreen.Models.name) {
-                Text("Hello")
+                ModelsScreen(
+                    modelsUiState = modelsUiState,
+                    handleEvent = { e ->
+                        modelsViewModel.handleEvent(e)
+                    }
+                )
             }
         }
     }
