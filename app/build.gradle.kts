@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.wipmobile"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -80,6 +80,10 @@ dependencies {
     implementation(libs.com.squareup.retrofit2.converter.gson)
     implementation(libs.com.squareup.okhttp3.logging.interceptor)
     implementation(libs.com.google.dagger.dagger)
+    implementation(libs.com.github.bumptech.glide)
+    implementation(libs.com.github.bumptech.glide.compose)
+    ksp(libs.com.github.bumptech.glide.compiler)
+    ksp(libs.com.github.bumptech.glide.annotations)
     ksp(libs.com.google.dagger.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

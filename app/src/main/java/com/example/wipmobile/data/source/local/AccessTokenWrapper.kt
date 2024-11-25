@@ -9,16 +9,22 @@ class AccessTokenWrapper @Inject constructor(private val sharedPreferencesApi: S
 
     fun getAccessToken(): AccessToken? {
         if (accessToken == null) {
-            Log.i("read token from shared pref api", "")
-            accessToken = AccessToken(sharedPreferencesApi.getString(SharedPreferencesApi.ACCESS_TOKEN))
+            try {
+                val token = sharedPreferencesApi.getString(SharedPreferencesApi.ACCESS_TOKEN)
+                val username = sharedPreferencesApi.getString(SharedPreferencesApi.USERNAME)
+                val expirationDate = sharedPreferencesApi.getString(SharedPreferencesApi.ACCESS_TOKEN_EXPIRATION_DATE)
+                accessToken = AccessToken(token, username, expirationDate)
+            } catch (e: Exception) {
+                return null
+            }
         }
         return accessToken
     }
 
     fun setAccessToken(token: AccessToken) {
-        Log.i("save token:", token.token)
-        this.accessToken = token
-        Log.i("save token to shared pref api:", token.token)
         sharedPreferencesApi.setString(SharedPreferencesApi.ACCESS_TOKEN, token.token)
+        sharedPreferencesApi.setString(SharedPreferencesApi.USERNAME, token.username)
+        sharedPreferencesApi.setString(SharedPreferencesApi.ACCESS_TOKEN_EXPIRATION_DATE, token.expirationDate)
+        this.accessToken = token
     }
 }

@@ -1,13 +1,12 @@
 package com.example.wipmobile.ui.auth
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wipmobile.data.AuthenticationUiState
 import com.example.wipmobile.data.UserRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -38,15 +37,18 @@ class AuthenticationViewModel @Inject constructor(
     }
 
     private fun checkToken(callback: () -> Unit) {
-        Log.i("auth vm", "check token exists")
-        viewModelScope.launch(Dispatchers.IO) {
-            if (userRepository.isUserLogged()) {
-                Log.i("auth vm", "user repo check success")
-                uiState.value = uiState.value.copy(isLoading = false, authenticated = true)
+        uiState.value = uiState.value.copy(isLoading = true)
+        var authenticated = false
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                authenticated = userRepository.isUserLogged()
             }
-        }
-        if (uiState.value.authenticated) {
-            callback()
+            if (authenticated) {
+                callback()
+            }
+            uiState.update {
+                it.copy(authenticated = authenticated, isLoading = false)
+            }
         }
     }
 

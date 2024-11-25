@@ -1,4 +1,4 @@
-package com.example.wipmobile.data.source.remote.api
+package com.example.wipmobile.libs
 
 import com.google.gson.Gson
 import okhttp3.Interceptor

@@ -1,6 +1,6 @@
 package com.example.wipmobile.data.source.remote.api
 
-import com.example.wipmobile.data.model.LoginResponse
+import com.example.wipmobile.data.source.remote.api.response.LoginResponse
 import retrofit2.http.Header
 import retrofit2.http.POST
 

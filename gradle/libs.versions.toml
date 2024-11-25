@@ -21,6 +21,8 @@ gson = "2.10.1"
 retrofit = "2.10.0"
 dagger = "2.48"
 okhttpLogInterceptor = "4.12.0"
+glide = "4.16.0"
+glideCompose = "1.0.0-beta01"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -57,6 +59,12 @@ com-squareup-retrofit2-converter-scalars = { group= "com.squareup.retrofit2", na
 com-google-dagger-dagger = { group = "com.google.dagger", name="dagger", version.ref = "dagger" }
 com-google-dagger-compiler = { group = "com.google.dagger", name = "dagger-compiler", version.ref ="dagger"}
 com-squareup-okhttp3-logging-interceptor = { group = "com.squareup.okhttp3", name="logging-interceptor", version.ref="okhttpLogInterceptor" }
+com-github-bumptech-glide = { group = "com.github.bumptech.glide", name="glide", version.ref="glide" }
+com-github-bumptech-glide-compiler = { group = "com.github.bumptech.glide", name="compiler", version.ref="glide" }
+com-github-bumptech-glide-annotations = { group = "com.github.bumptech.glide", name="annotations", version.ref="glide" }
+com-github-bumptech-glide-compose = { group = "com.github.bumptech.glide", name="compose", version.ref="glideCompose" }
+
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

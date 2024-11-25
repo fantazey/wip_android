@@ -1,5 +1,6 @@
 package com.example.wipmobile
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -70,19 +71,12 @@ fun WipApp(
     val currentScreen = WipScreen.valueOf(
         backStackEntry?.destination?.route ?: WipScreen.Authentication.name
     )
-    Scaffold(
-        topBar = {
-            WipAppBar(
-                currentScreen = WipScreen.Authentication,
-                canNavigateBack = navController.previousBackStackEntry != null,
-                navigateUp = { navController.navigateUp() }
-            )
-        }
-    ) { innerPadding ->
+    Log.i("wip screen", "currentScreen: ${currentScreen.name}")
+    Scaffold() { innerPadding ->
         val authUiState by authenticationViewModel.uiState.collectAsState()
         val modelsUiState by modelsViewModel.uiState.collectAsState()
         NavHost(
-            navController=navController,
+            navController = navController,
             startDestination = WipScreen.Authentication.name,
             modifier = Modifier.padding(innerPadding)
         ) {

@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.bumptech.glide.Glide
+import com.bumptech.glide.MemoryCategory
 import com.example.wipmobile.ui.auth.AuthenticationViewModel
 import com.example.wipmobile.ui.models.ModelsViewModel
 import com.example.wipmobile.ui.theme.WipMobileTheme
@@ -17,6 +19,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         (application as WipApplication).appComponent.inject(this)
+        Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {

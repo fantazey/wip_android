@@ -21,5 +21,7 @@ class SharedPreferencesApi @Inject constructor(context: Context){
     companion object {
         private const val PREFERENCES_NAME = "WIP_PREF"
         const val ACCESS_TOKEN = "ACCESS_TOKEN"
+        const val USERNAME = "USERNAME"
+        const val ACCESS_TOKEN_EXPIRATION_DATE = "ACCESS_TOKEN_EXPIRATION_DATE"
     }
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wipmobile.data.ModelsRepository
 import com.example.wipmobile.data.ModelsUiState
+import com.example.wipmobile.data.model.UserStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -14,6 +15,8 @@ class ModelsViewModel @Inject constructor(
     private val modelsRepository: ModelsRepository
 ): ViewModel() {
     val uiState = MutableStateFlow(ModelsUiState())
+    private var userStatusesLoaded = false
+    private var userStatuses = emptyArray<UserStatus>()
 
     fun handleEvent(event: ModelsEvent) {
         when (event) {
@@ -38,8 +41,15 @@ class ModelsViewModel @Inject constructor(
         uiState.value = uiState.value.copy(isLoading = true)
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val modelsArray = modelsRepository.getModels()
-                uiState.value = uiState.value.copy(models = modelsArray, isLoading = false, modelsLoaded = true)
+                if (!userStatusesLoaded) {
+                    userStatuses = modelsRepository.loadUserStatuses()
+                    userStatusesLoaded = true
+                }
+                val modelsArray = modelsRepository.loadModels()
+                modelsArray.forEach { model ->
+                    model.statusName = userStatuses.find { it.id == model.statusId }?.name
+                }
+                uiState.value = uiState.value.copy(modelResponses = modelsArray, isLoading = false, modelsLoaded = true)
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     uiState.value = uiState.value.copy(error = e.message, isLoading = false, modelsLoaded = true)
@@ -55,4 +65,6 @@ class ModelsViewModel @Inject constructor(
     private fun modelsLoaded() {
         uiState.value = uiState.value.copy(error = "Ошибка")
     }
+
+
 }

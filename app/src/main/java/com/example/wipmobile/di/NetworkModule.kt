@@ -2,7 +2,7 @@ package com.example.wipmobile.di
 
 import com.example.wipmobile.data.source.remote.api.AuthApi
 import com.example.wipmobile.data.source.remote.api.AuthInterceptor
-import com.example.wipmobile.data.source.remote.api.NetworkClientGenerator
+import com.example.wipmobile.libs.NetworkClientGenerator
 import com.example.wipmobile.data.source.remote.api.WipApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

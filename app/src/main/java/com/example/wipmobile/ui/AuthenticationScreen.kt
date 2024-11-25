@@ -21,9 +21,11 @@ fun AuthenticationScreen(
     handleEvent: (event: AuthenticationEvent) -> Unit,
     successAuthCallback: () -> Unit
 ) {
-    Log.i("auth screen", "check auth")
-    handleEvent(AuthenticationEvent.CheckAuthentication(successAuthCallback))
-    Log.i("auth screen", "render form")
+    if (!authenticationState.authenticated && !authenticationState.isLoading) {
+        Log.i("auth screen", "check auth")
+        handleEvent(AuthenticationEvent.CheckAuthentication(successAuthCallback))
+        Log.i("auth screen", "render form")
+    }
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
