@@ -5,5 +5,15 @@ data class Model(
     val name: String,
     val statusId: Int,
     var statusName: String?,
-    val lastImagePath: String?
+    val lastImagePath: String?,
+    val isTerrain: Boolean,
+    val hoursSpent: Double,
+
+    val unitCount: Int,
+    val groups: List<ModelGroup>,
+
+    val battleScribeUnitId: Int?,
+    val battleScribeUnitName: String?,
+    val killTeamId: Int?,
+    val killTeamName: String?,
 )

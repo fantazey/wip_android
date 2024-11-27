@@ -46,9 +46,6 @@ class ModelsViewModel @Inject constructor(
                     userStatusesLoaded = true
                 }
                 val modelsArray = modelsRepository.loadModels()
-                modelsArray.forEach { model ->
-                    model.statusName = userStatuses.find { it.id == model.statusId }?.name
-                }
                 uiState.value = uiState.value.copy(modelResponses = modelsArray, isLoading = false, modelsLoaded = true)
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
