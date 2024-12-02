@@ -8,10 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.wipmobile.data.AuthenticationUiState
-import com.example.wipmobile.ui.auth.AuthenticationErrorDialog
+import com.example.wipmobile.ui.auth.AuthenticationUiState
 import com.example.wipmobile.ui.auth.AuthenticationEvent
 import com.example.wipmobile.ui.auth.AuthenticationForm
+import com.example.wipmobile.ui.components.ErrorDialog
 import com.example.wipmobile.ui.theme.WipMobileTheme
 
 @Composable
@@ -49,7 +49,7 @@ fun AuthenticationScreen(
                 }
             )
             authenticationState.error?.let {
-                AuthenticationErrorDialog(
+                ErrorDialog(
                     error = it,
                     clearError = {
                         handleEvent(AuthenticationEvent.ClearError)

@@ -1,4 +1,4 @@
-package com.example.wipmobile.data
+package com.example.wipmobile.ui.auth
 
 data class AuthenticationUiState(
     val login: String? = null,

@@ -1,5 +1,7 @@
 package com.example.wipmobile.data
 
+import com.example.wipmobile.data.model.BattleScribeUnit
+import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.data.model.UserStatus
 
@@ -16,5 +18,13 @@ class ModelsRepository @Inject constructor(
 
     suspend fun loadUserStatuses(): Array<UserStatus> {
         return remoteDataSource.getUserStatusList()
+    }
+
+    suspend fun loadKillTeams(): Array<KillTeam> {
+        return remoteDataSource.getKillTeamList()
+    }
+
+    suspend fun loadBsUnits(): Array<BattleScribeUnit> {
+        return remoteDataSource.getBattleScribeUnitList()
     }
 }

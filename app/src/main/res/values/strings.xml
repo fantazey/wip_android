@@ -6,12 +6,16 @@
     <string name="cd_password_visibility_show">Показать пароль</string>
     <string name="cd_password_visibility_hide">Скрыть пароль</string>
     <string name="login_in_button_label">Войти</string>
-    <string name="login_error_dialog_title">Ошибка входа</string>
+    <string name="error_dialog_title"></string>
     <string name="login_error_dialog_default_message">Неизвестно что случилось</string>
-    <string name="login_error_dialog_ok">Ок</string>
+    <string name="ok_btn_label">Ок</string>
 
     <string name="login_screen_title">Вход</string>
-    <string name="model_list_screen_title">Список моделей</string>
+    <string name="model_list_screen_title">Мои модели</string>
+    <string name="add_model_screen_title">Добавить</string>
+    <string name="add_progress_screen_title">Покрасил</string>
+    <string name="works_screen_title">Лента</string>
+    <string name="profile_screen_title">Профиль</string>
     <string name="back_button">Назад</string>
 
 </resources>

@@ -1,4 +1,4 @@
-package com.example.wipmobile.data
+package com.example.wipmobile.ui.models
 
 import com.example.wipmobile.data.model.Model
 

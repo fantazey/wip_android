@@ -2,7 +2,6 @@ package com.example.wipmobile.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wipmobile.data.AuthenticationUiState
 import com.example.wipmobile.data.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
