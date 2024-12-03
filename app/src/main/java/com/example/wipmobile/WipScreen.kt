@@ -17,15 +17,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.wipmobile.ui.AddModelScreen
+import com.example.wipmobile.ui.AddProgressScreen
 import com.example.wipmobile.ui.auth.AuthenticationUiState
 import com.example.wipmobile.ui.models.ModelsUiState
 import com.example.wipmobile.ui.AuthenticationScreen
 import com.example.wipmobile.ui.ModelsScreen
+import com.example.wipmobile.ui.ProfileScreen
+import com.example.wipmobile.ui.WorksScreen
+import com.example.wipmobile.ui.add_model.AddModelEvent
+import com.example.wipmobile.ui.add_model.AddModelUiState
+import com.example.wipmobile.ui.add_model.AddModelViewModel
 import com.example.wipmobile.ui.auth.AuthenticationEvent
 import com.example.wipmobile.ui.auth.AuthenticationViewModel
 import com.example.wipmobile.ui.components.BottomNavigationBar
 import com.example.wipmobile.ui.models.ModelsEvent
 import com.example.wipmobile.ui.models.ModelsViewModel
+import io.ktor.events.EventHandler
 
 
 enum class WipScreen(@StringRes val title: Int) {
@@ -42,6 +50,7 @@ enum class WipScreen(@StringRes val title: Int) {
 fun WipApp(
     authenticationViewModel: AuthenticationViewModel = viewModel(),
     modelsViewModel: ModelsViewModel = viewModel(),
+    addModelViewModel: AddModelViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -51,13 +60,17 @@ fun WipApp(
     Log.i("wip screen", "currentScreen: ${currentScreen.name}")
     val authUiState by authenticationViewModel.uiState.collectAsState()
     val modelsUiState by modelsViewModel.uiState.collectAsState()
+    val addModelUiState by addModelViewModel.uiState.collectAsState()
     val authViewModelEventHandler: (e: AuthenticationEvent) -> Unit = { authenticationViewModel.handleEvent(it) }
     val modelsViewModelEventHandler: (e: ModelsEvent) -> Unit = { modelsViewModel.handleEvent(it) }
+    val addModelEventHandler: (e: AddModelEvent) -> Unit = { addModelViewModel.handleEvent(it) }
     WipAppScreen(
         authUiState = authUiState,
         modelsUiState = modelsUiState,
+        addModelUiState = addModelUiState,
         authViewModelEventHandler = authViewModelEventHandler,
         modelsViewModelEventHandler = modelsViewModelEventHandler,
+        addModelEventHandler = addModelEventHandler,
         currentScreen = currentScreen,
         navController = navController
     )
@@ -68,8 +81,10 @@ fun WipApp(
 fun WipAppScreen(
     authUiState: AuthenticationUiState,
     modelsUiState: ModelsUiState,
+    addModelUiState: AddModelUiState,
     authViewModelEventHandler: (e: AuthenticationEvent) -> Unit,
     modelsViewModelEventHandler: (e: ModelsEvent) -> Unit,
+    addModelEventHandler: (e: AddModelEvent) -> Unit,
     currentScreen: WipScreen,
     navController: NavHostController,
 ) {
@@ -102,28 +117,20 @@ fun WipAppScreen(
                 )
             }
             composable(route = WipScreen.AddProgress.name) {
-                ModelsScreen(
-                    modelsUiState = modelsUiState,
-                    handleEvent = modelsViewModelEventHandler
-                )
+                AddProgressScreen()
             }
             composable(route = WipScreen.Works.name) {
-                ModelsScreen(
-                    modelsUiState = modelsUiState,
-                    handleEvent = modelsViewModelEventHandler
-                )
+                WorksScreen()
             }
             composable(route = WipScreen.AddModel.name) {
-                ModelsScreen(
-                    modelsUiState = modelsUiState,
-                    handleEvent = modelsViewModelEventHandler
+                AddModelScreen(
+                    uiState = addModelUiState,
+                    eventHandler = addModelEventHandler,
+                    successCallback = {}
                 )
             }
             composable(route = WipScreen.Profile.name) {
-                ModelsScreen(
-                    modelsUiState = modelsUiState,
-                    handleEvent = modelsViewModelEventHandler
-                )
+                ProfileScreen()
             }
         }
     }
@@ -142,8 +149,10 @@ fun WinAppScreenPreview() {
     WipAppScreen(
         authUiState = AuthenticationUiState(),
         modelsUiState = modelsUiState,
+        addModelUiState = AddModelUiState(),
         authViewModelEventHandler = {},
         modelsViewModelEventHandler = {},
+        addModelEventHandler = {},
         currentScreen = WipScreen.Profile,
         navController = navController
     )

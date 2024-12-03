@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
+import com.example.wipmobile.ui.add_model.AddModelViewModel
 import com.example.wipmobile.ui.auth.AuthenticationViewModel
 import com.example.wipmobile.ui.models.ModelsViewModel
 import com.example.wipmobile.ui.theme.WipMobileTheme
@@ -16,6 +17,8 @@ class MainActivity : ComponentActivity() {
     lateinit var authenticationViewModel: AuthenticationViewModel
     @Inject
     lateinit var modelsViewModel: ModelsViewModel
+    @Inject
+    lateinit var addModelViewModel: AddModelViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         (application as WipApplication).appComponent.inject(this)
@@ -26,7 +29,8 @@ class MainActivity : ComponentActivity() {
             WipMobileTheme {
                 WipApp(
                     authenticationViewModel=authenticationViewModel,
-                    modelsViewModel = modelsViewModel
+                    modelsViewModel = modelsViewModel,
+                    addModelViewModel = addModelViewModel
                 )
             }
         }

@@ -1,11 +1,13 @@
 <resources>
     <string name="app_name">Wip Mobile</string>
     <string name="title_activity_login">Выполни вход</string>
+    <string name="title_activity_add_model">Добавить модель</string>
     <string name="prompt_login">Логин</string>
     <string name="prompt_password">Пароль</string>
     <string name="cd_password_visibility_show">Показать пароль</string>
     <string name="cd_password_visibility_hide">Скрыть пароль</string>
     <string name="login_in_button_label">Войти</string>
+    <string name="save_new_model_button_label">Сохранить</string>
     <string name="error_dialog_title"></string>
     <string name="login_error_dialog_default_message">Неизвестно что случилось</string>
     <string name="ok_btn_label">Ок</string>
@@ -18,4 +20,13 @@
     <string name="profile_screen_title">Профиль</string>
     <string name="back_button">Назад</string>
 
+
+    <string name="add_model_form_name_label">Название</string>
+    <string name="add_model_form_count_label">Количество юнитов</string>
+    <string name="add_model_form_terrain_label">Террейн</string>
+    <string name="add_model_form_status_label">Статус</string>
+    <string name="add_model_form_groups_label">Группы</string>
+    <string name="add_model_form_buy_date_label">Дата покупки</string>
+    <string name="add_model_form_kill_team_label">KillTeam</string>
+    <string name="add_model_form_bs_label">BattleScribe</string>
 </resources>
