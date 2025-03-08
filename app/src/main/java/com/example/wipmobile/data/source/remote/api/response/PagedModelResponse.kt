@@ -1,25 +1,23 @@
 package com.example.wipmobile.data.source.remote.api.response
 
+import com.example.wipmobile.data.model.ModelsPage
+import okhttp3.internal.toImmutableList
+
 
 data class PagedModelResponse(
     val count: Int,
-    val results: Array<ModelResponse>,
+    val page: Int,
+    val pages: Int,
+    val pageSize: Int,
+    val results: List<ModelResponse>
 ) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as PagedModelResponse
-
-        if (count != other.count) return false
-        if (!results.contentEquals(other.results)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = count
-        result = 31 * result + results.contentHashCode()
-        return result
+    fun mapToModel(): ModelsPage {
+        return ModelsPage(
+            count = count,
+            pageSize = pageSize,
+            page = page,
+            pages = pages,
+            models = results.map { it.mapToModel() }.toImmutableList()
+        )
     }
 }

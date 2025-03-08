@@ -14,5 +14,10 @@ data class ModelsUiState(
     val selectedStatuses: List<UserStatus> = emptyList(),
     val availableGroups: List<ModelGroup> = emptyList(),
     val selectedGroups: List<ModelGroup> = emptyList(),
-    val nameQuery: String = ""
+    val nameQuery: String = "",
+    val count: Int = 0,
+    // paging
+    val pagesCount: Int = 0,
+    val currentPage: Int = 1,
+    val pageSize: Int = 1,
 )

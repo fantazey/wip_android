@@ -2,8 +2,8 @@ package com.example.wipmobile.data.source.remote
 
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
-import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.data.model.ModelGroup
+import com.example.wipmobile.data.model.ModelsPage
 import com.example.wipmobile.data.model.UserStatus
 import com.example.wipmobile.data.source.remote.api.WipApi
 import okhttp3.internal.toImmutableList
@@ -12,13 +12,13 @@ import javax.inject.Inject
 class ModelRemoteDataSource @Inject constructor(
     private val wipApi: WipApi
 ) {
-    suspend fun getModels(filter: LoadModelsFilter): List<Model> {
+    suspend fun getModels(filter: LoadModelsFilter): ModelsPage {
         return wipApi.getUserModels(
             statuses = filter.statusesToQuery(),
             modelGroups = filter.modelGroupsToQuery(),
             name = filter.name,
             page = filter.page
-        ).results.map { it.mapToModel() }.toImmutableList()
+        ).mapToModel()
     }
 
     suspend fun getUserStatusList(): List<UserStatus> {

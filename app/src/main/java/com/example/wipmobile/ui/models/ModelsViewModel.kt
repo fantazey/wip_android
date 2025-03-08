@@ -66,17 +66,23 @@ class ModelsViewModel @Inject constructor(
             try {
                 userStatuses = modelsRepository.loadUserStatuses()
                 modelGroups = modelsRepository.loadModelGroups()
-                models = modelsRepository.loadModels(
+                val modelsPage = modelsRepository.loadModels(
                     modelGroups = uiState.value.selectedGroups,
                     statuses = uiState.value.selectedStatuses,
-                    name = uiState.value.nameQuery
+                    name = uiState.value.nameQuery,
+                    page = uiState.value.currentPage
                 )
+                models = modelsPage.models
                 uiState.value = uiState.value.copy(
                     models = models,
                     isLoading = false,
                     loaded = true,
                     availableStatuses = userStatuses,
-                    availableGroups = modelGroups
+                    availableGroups = modelGroups,
+                    pageSize = modelsPage.pageSize,
+                    pagesCount = modelsPage.pages,
+                    count = modelsPage.count,
+                    currentPage = modelsPage.page
                 )
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -92,7 +98,8 @@ class ModelsViewModel @Inject constructor(
     }
 
     private fun selectPage(page: Int) {
-        uiState.value = uiState.value.copy(error = "Еще не реализовано ")
+        uiState.value = uiState.value.copy(currentPage = page, loaded = false)
+        loadModels()
     }
 
     private fun clearError() {

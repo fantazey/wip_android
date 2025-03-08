@@ -4,6 +4,7 @@ import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.data.model.ModelGroup
+import com.example.wipmobile.data.model.ModelsPage
 import com.example.wipmobile.data.model.UserStatus
 
 import com.example.wipmobile.data.source.remote.ModelRemoteDataSource
@@ -18,7 +19,7 @@ class ModelsRepository @Inject constructor(
         page: Int = 1,
         statuses: List<UserStatus> = emptyList(),
         modelGroups: List<ModelGroup> = emptyList()
-    ): List<Model> {
+    ): ModelsPage {
         val filter = ModelRemoteDataSource.LoadModelsFilter(
             statuses = statuses,
             modelGroups = modelGroups,

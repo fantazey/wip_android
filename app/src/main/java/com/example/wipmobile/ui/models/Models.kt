@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -48,6 +51,7 @@ import com.example.wipmobile.data.model.UserStatus
 import com.example.wipmobile.ui.components.ModelHoursSpend
 import com.example.wipmobile.ui.components.ModelImage
 import com.example.wipmobile.ui.components.ModelStatus
+import com.google.android.material.chip.Chip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,23 +68,39 @@ fun ModelsListContainer(
             handleEvent(ModelsEvent.RefreshList)
         }
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+        LazyColumn(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = modifier.fillMaxWidth()
         ) {
-            FilterChip(
-                onClick = { filterPanelVisible = !filterPanelVisible },
-                selected = filterPanelVisible,
-                label = { Text("Фильтры") },
-            )
-            if (filterPanelVisible) {
-                ModelsFilterPanel(uiState, handleEvent, modifier)
-            }
-            LazyColumn(
-                modifier = modifier.fillMaxSize()
-            ) {
-                items(uiState.models.size) { index: Int ->
-                    ModelCard(uiState.models[index], selectModel = selectModel)
+            item {
+                Row {
+                    AssistChip(
+                        onClick = {},
+                        label = { Text("Найдено ${uiState.count} моделей") }
+                    )
+                    FilterChip(
+                        onClick = { filterPanelVisible = !filterPanelVisible },
+                        selected = filterPanelVisible,
+                        label = { Text("Фильтры") },
+                    )
                 }
+            }
+            item {
+                if (filterPanelVisible) {
+                    ModelsFilterPanel(uiState, handleEvent, modifier)
+                }
+            }
+            items(uiState.models.size) { index: Int ->
+                ModelCard(uiState.models[index], selectModel = selectModel)
+            }
+
+            item {
+                Pagination(
+                    current = uiState.currentPage,
+                    count = uiState.pagesCount,
+                    onClick = { page ->
+                        handleEvent(ModelsEvent.SelectPage(page))
+                    })
             }
         }
     }
@@ -387,4 +407,52 @@ fun ModelsFilterModelGroup(
 
         }
     }
+}
+
+@Composable
+fun Pagination(current: Int, count: Int, onClick: (page: Int) -> Unit) {
+    if (count <= 1 || count < current) {
+        return
+    }
+    val pageList: List<Int> = makePages(current, count)
+    LazyRow(modifier=Modifier.fillMaxWidth()) {
+        items(pageList) { page ->
+            if (page == 0) {
+                TextButton(onClick = {}) {
+                    Text("...")
+                }
+            } else {
+                if (page == current) {
+                    TextButton(onClick = {}) {
+                        Text(page.toString(), color = Color.Red)
+                    }
+                } else {
+                    TextButton(onClick = { onClick(page) }) {
+                        Text(page.toString())
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+fun makePages(current: Int, count: Int): List<Int> {
+    // если страниц меньше или 7 - выводим все сразу
+    if (count <= 7) {
+        return (1..count).toList()
+    }
+    if (current <= 3) {
+        return (1..4).toList() + 0 + (count-3..count).toList()
+    }
+    if (current >= count-2) {
+        return (1..2).toList() + 0 + (count-3..count).toList()
+    }
+    return listOf(1) + 0 + (current-1..current+1).toList() + 0 + listOf(count).toList()
+}
+
+@Composable
+@Preview
+fun PaginationPreview() {
+    Pagination(current = 7, count=9, onClick = {})
 }
