@@ -3,26 +3,52 @@ package com.example.wipmobile.data.source.remote
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.data.model.Model
+import com.example.wipmobile.data.model.ModelGroup
 import com.example.wipmobile.data.model.UserStatus
 import com.example.wipmobile.data.source.remote.api.WipApi
+import okhttp3.internal.toImmutableList
 import javax.inject.Inject
 
 class ModelRemoteDataSource @Inject constructor(
     private val wipApi: WipApi
-){
-    suspend fun getModels(): Array<Model> {
-        return wipApi.getUserModels().results.map { it.mapToModel() }.toTypedArray()
+) {
+    suspend fun getModels(filter: LoadModelsFilter): List<Model> {
+        return wipApi.getUserModels(
+            statuses = filter.statusesToQuery(),
+            modelGroups = filter.modelGroupsToQuery(),
+            name = filter.name,
+            page = filter.page
+        ).results.map { it.mapToModel() }.toImmutableList()
     }
 
-    suspend fun getUserStatusList(): Array<UserStatus> {
-        return wipApi.getUserStatuses().map { it.toUserStatus() }.toTypedArray()
+    suspend fun getUserStatusList(): List<UserStatus> {
+        return wipApi.getUserStatuses().map { it.toUserStatus() }.toImmutableList()
     }
 
-    suspend fun getKillTeamList(): Array<KillTeam> {
-        return wipApi.getKillTeams().map { it.toKillTeam() }.toTypedArray()
+    suspend fun getKillTeamList(): List<KillTeam> {
+        return wipApi.getKillTeams().map { it.toKillTeam() }.toImmutableList()
     }
 
-    suspend fun getBattleScribeUnitList(): Array<BattleScribeUnit> {
-        return wipApi.getBattleScribeUnits().map { it.toBattleScribeUnit() }.toTypedArray()
+    suspend fun getBattleScribeUnitList(): List<BattleScribeUnit> {
+        return wipApi.getBattleScribeUnits().map { it.toBattleScribeUnit() }.toImmutableList()
+    }
+
+    suspend fun getModelGroups(): List<ModelGroup> {
+        return wipApi.getModelGroups().map { it.toModelGroup() }.toImmutableList()
+    }
+
+    data class LoadModelsFilter(
+        val statuses: List<UserStatus> = emptyList(),
+        val modelGroups: List<ModelGroup> = emptyList(),
+        val name: String = "",
+        val page: Int = 1
+    ) {
+        fun statusesToQuery(): List<Int> {
+            return statuses.map { it.id }.toImmutableList()
+        }
+
+        fun modelGroupsToQuery(): List<Int> {
+            return modelGroups.map { it.id }.toImmutableList()
+        }
     }
 }

@@ -3,9 +3,7 @@ package com.example.wipmobile.ui
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.wipmobile.ui.models.ModelsUiState
@@ -18,34 +16,28 @@ import com.example.wipmobile.ui.theme.WipMobileTheme
 
 @Composable
 fun ModelsScreen(
-    modelsUiState: ModelsUiState,
-    handleEvent: (event: ModelsEvent) -> Unit
+    uiState: ModelsUiState,
+    handleEvent: (event: ModelsEvent) -> Unit,
+    selectModel: (model: Model) -> Unit
 ) {
-    Log.i("model screen","Рисуем список моделей")
-    if (!modelsUiState.modelsLoaded && !modelsUiState.isLoading) {
-        Log.i("model screen","Список пустой, надо загрузить")
-        handleEvent(ModelsEvent.ModelsLoad)
+    Log.i("model screen", "Рисуем список моделей")
+    if (uiState.models.isEmpty() && !uiState.isLoading) {
+        Log.i("model screen", "Список пустой, надо загрузить")
+        handleEvent(ModelsEvent.Load)
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        if (modelsUiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+        if (uiState.error != null) {
+            ErrorDialog(
+                error = uiState.error,
+                clearError = { handleEvent(ModelsEvent.ClearError) }
+            )
         } else {
-            if (modelsUiState.error != null) {
-                ErrorDialog(
-                    error=modelsUiState.error,
-                    clearError = {}
-                )
-            } else {
-                ModelsListContainer(
-                    modelResponses = modelsUiState.modelResponses,
-                    handleEvent = handleEvent
-                )
-            }
+            ModelsListContainer(
+                uiState = uiState,
+                handleEvent = handleEvent,
+                selectModel = selectModel
+            )
         }
     }
 }
@@ -66,7 +58,10 @@ fun ModelsScreenPreview() {
 
         killTeamId = 1,
         killTeamName = "KT Badge text",
-        groups = listOf(ModelGroup(id=1,name=" группа 1"), ModelGroup(id=2,name=" группа 2")),
+        groups = listOf(
+            ModelGroup(id = 1, name = " группа 1"),
+            ModelGroup(id = 2, name = " группа 2")
+        ),
         isTerrain = true,
         unitCount = 180
     )
@@ -83,7 +78,10 @@ fun ModelsScreenPreview() {
 
         killTeamId = 1,
         killTeamName = "KT Badge text",
-        groups = listOf(ModelGroup(id=1,name=" группа 1"), ModelGroup(id=2,name=" группа 2")),
+        groups = listOf(
+            ModelGroup(id = 1, name = " группа 1"),
+            ModelGroup(id = 2, name = " группа 2")
+        ),
         isTerrain = true,
         unitCount = 180
     )
@@ -100,18 +98,22 @@ fun ModelsScreenPreview() {
 
         killTeamId = 1,
         killTeamName = "KT Badge text",
-        groups = listOf(ModelGroup(id=1,name=" группа 1"), ModelGroup(id=2,name=" группа 2")),
+        groups = listOf(
+            ModelGroup(id = 1, name = " группа 1"),
+            ModelGroup(id = 2, name = " группа 2")
+        ),
         isTerrain = true,
         unitCount = 180
     )
     val state = ModelsUiState(
         isLoading = false,
-        modelResponses = arrayOf(model1, model2, model3)
+        models = listOf(model1, model2, model3)
     )
     WipMobileTheme {
         ModelsScreen(
-            modelsUiState = state,
-            handleEvent = {}
+            uiState = state,
+            handleEvent = {},
+            selectModel = {}
         )
     }
 }

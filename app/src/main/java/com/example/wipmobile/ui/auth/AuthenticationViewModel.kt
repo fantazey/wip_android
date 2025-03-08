@@ -60,20 +60,24 @@ class AuthenticationViewModel @Inject constructor(
     }
 
     private fun authenticate(successAuthCallback: () -> Unit) {
+        if (uiState.value.authenticated) {
+            successAuthCallback()
+        }
         uiState.value = uiState.value.copy(isLoading = true)
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 userRepository.login(uiState.value.login!!, uiState.value.password!!)
                 uiState.value = uiState.value.copy(isLoading = false, authenticated = true)
+                withContext(Dispatchers.Main) {
+                    successAuthCallback()
+                }
             } catch (ex: Exception) {
                 withContext(Dispatchers.Main) {
                     uiState.value = uiState.value.copy(isLoading = false, error = ex.message, authenticated = false)
                 }
             }
         }
-        if (uiState.value.authenticated) {
-            successAuthCallback()
-        }
+
     }
 
     private fun clearError() {

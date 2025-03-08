@@ -10,8 +10,8 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 class UserRemoteDataSource @Inject constructor(private val authApi: AuthApi) {
     @OptIn(ExperimentalEncodingApi::class)
     suspend fun login(username: String, password: String): AccessToken {
-        val headerValue = Base64.Default.encode((username + ":" + password).encodeToByteArray())
-        val response: LoginResponse = authApi.login("Basic " + headerValue)
+        val headerValue = Base64.Default.encode(("$username:$password").encodeToByteArray())
+        val response: LoginResponse = authApi.login("Basic $headerValue")
         return AccessToken(response.token, response.user.username, response.expiry)
     }
 }
