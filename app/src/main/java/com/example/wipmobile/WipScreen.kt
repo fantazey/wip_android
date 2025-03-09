@@ -34,6 +34,7 @@ import com.example.wipmobile.ui.auth.AuthenticationEvent
 import com.example.wipmobile.ui.auth.AuthenticationViewModel
 import com.example.wipmobile.ui.components.BottomNavigationBar
 import com.example.wipmobile.ui.model.ModelEvent
+import com.example.wipmobile.ui.model.ModelTopBar
 import com.example.wipmobile.ui.model.ModelUiState
 import com.example.wipmobile.ui.model.ModelViewModel
 import com.example.wipmobile.ui.models.ModelsEvent
@@ -109,11 +110,6 @@ fun WipAppScreen(
             if (WipScreen.Authentication != currentScreen) {
                 BottomNavigationBar(currentScreen) { screen -> navController.navigate(screen) }
             }
-        },
-        topBar = {
-            if (WipScreen.Models == currentScreen) {
-
-            }
         }
     ) { innerPadding ->
         NavHost(
@@ -145,6 +141,9 @@ fun WipAppScreen(
                 ModelScreen(
                     uiState = modelUiState,
                     handleEvent = modelViewModelEventHandler,
+                    navigateBackCallback = {
+                        navController.navigate(WipScreen.Models.name)
+                    }
                 )
             }
             composable(route = WipScreen.AddProgress.name) {

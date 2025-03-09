@@ -2,7 +2,10 @@ package com.example.wipmobile.data.source.remote
 
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
+import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.data.model.ModelGroup
+import com.example.wipmobile.data.model.ModelImage
+import com.example.wipmobile.data.model.ModelProgress
 import com.example.wipmobile.data.model.ModelsPage
 import com.example.wipmobile.data.model.UserStatus
 import com.example.wipmobile.data.source.remote.api.WipApi
@@ -19,6 +22,18 @@ class ModelRemoteDataSource @Inject constructor(
             name = filter.name,
             page = filter.page
         ).mapToModel()
+    }
+
+    suspend fun getModel(id: Int): Model {
+        return wipApi.getModel(id).mapToModel()
+    }
+
+    suspend fun getModelImages(modelId: Int): List<ModelImage> {
+        return wipApi.getModelImages(modelId).map { it.mapToModel() }.toImmutableList()
+    }
+
+    suspend fun getModelProgress(modelId: Int): List<ModelProgress> {
+        return wipApi.getModelProgress(modelId).map { it.mapToModel() }.toImmutableList()
     }
 
     suspend fun getUserStatusList(): List<UserStatus> {

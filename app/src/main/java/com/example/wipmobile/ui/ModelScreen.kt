@@ -12,7 +12,8 @@ import com.example.wipmobile.ui.model.ModelUiState
 @Composable
 fun ModelScreen(
     uiState: ModelUiState,
-    handleEvent: (event: ModelEvent) -> Unit
+    handleEvent: (event: ModelEvent) -> Unit,
+    navigateBackCallback: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.error != null) {
@@ -28,8 +29,10 @@ fun ModelScreen(
         } else {
             ModelCard(
                 model=uiState.model,
-                isLoading=uiState.isLoading,
-                handleEvent = {}
+                progress = uiState.progress,
+                images = uiState.images,
+                handleEvent = handleEvent,
+                navigateBackCallback = navigateBackCallback
             )
         }
     }

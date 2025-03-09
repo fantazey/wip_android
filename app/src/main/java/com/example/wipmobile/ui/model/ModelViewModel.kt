@@ -3,12 +3,11 @@ package com.example.wipmobile.ui.model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wipmobile.data.ModelsRepository
-import com.example.wipmobile.ui.auth.AuthenticationUiState
-import com.example.wipmobile.data.UserRepository
 import com.example.wipmobile.data.model.Model
+import com.example.wipmobile.data.model.ModelImage
+import com.example.wipmobile.data.model.ModelProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -17,6 +16,9 @@ class ModelViewModel @Inject constructor(
     private val modelsRepository: ModelsRepository
 ): ViewModel() {
     val uiState = MutableStateFlow(ModelUiState())
+    private var modelProgress = emptyList<ModelProgress>()
+    private var modelImages = emptyList<ModelImage>()
+    private var model: Model? = null
 
     fun handleEvent(event: ModelEvent) {
         when (event) {
@@ -29,12 +31,41 @@ class ModelViewModel @Inject constructor(
             is ModelEvent.Refresh -> {
                 refresh()
             }
-
         }
     }
 
     private fun selectModel(model: Model) {
         uiState.value = uiState.value.copy(model=model, isLoading = false)
+        loadData(model)
+    }
+
+    private fun loadData(modelToLoad: Model) {
+        if (uiState.value.loaded) {
+            return
+        }
+        uiState.value = uiState.value.copy(isLoading = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                model = modelsRepository.loadModel(modelToLoad.id)
+                modelImages = modelsRepository.loadModelImages(modelToLoad)
+                modelProgress = modelsRepository.loadModelProgress(modelToLoad)
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    loaded = true,
+                    model = model,
+                    images = modelImages,
+                    progress = modelProgress,
+                )
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    uiState.value = uiState.value.copy(
+                        error = e.message,
+                        isLoading = false,
+                        loaded = true
+                    )
+                }
+            }
+        }
     }
 
     private fun clearError() {
@@ -42,6 +73,7 @@ class ModelViewModel @Inject constructor(
     }
 
     private fun refresh() {
-
+        uiState.value = uiState.value.copy(loaded = false)
+        loadData(uiState.value.model!!)
     }
 }
