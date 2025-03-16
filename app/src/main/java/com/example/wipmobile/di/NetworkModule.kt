@@ -2,6 +2,7 @@ package com.example.wipmobile.di
 
 import com.example.wipmobile.data.source.remote.api.AuthApi
 import com.example.wipmobile.data.source.remote.api.AuthInterceptor
+import com.example.wipmobile.data.source.remote.api.RemoteHost
 import com.example.wipmobile.libs.NetworkClientGenerator
 import com.example.wipmobile.data.source.remote.api.WipApi
 import com.google.gson.Gson
@@ -23,13 +24,13 @@ class NetworkModule {
     @Singleton
     @Provides
     fun provideAuthApi(gson: Gson): AuthApi {
-        return NetworkClientGenerator.generate("http://10.0.2.2:8000", AuthApi::class.java, gson, emptyArray())
+        return NetworkClientGenerator.generate(RemoteHost.HOST, AuthApi::class.java, gson, emptyArray())
     }
 
     @Singleton
     @Provides
     fun provideWipApi(gson: Gson, authInterceptor: AuthInterceptor, logInterceptor: HttpLoggingInterceptor): WipApi {
-        return NetworkClientGenerator.generate("http://10.0.2.2:8000", WipApi::class.java, gson, arrayOf(authInterceptor, logInterceptor))
+        return NetworkClientGenerator.generate(RemoteHost.HOST, WipApi::class.java, gson, arrayOf(authInterceptor, logInterceptor))
     }
 
     @Singleton

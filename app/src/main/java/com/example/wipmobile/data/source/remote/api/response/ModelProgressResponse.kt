@@ -1,6 +1,7 @@
 package com.example.wipmobile.data.source.remote.api.response
 
 import com.example.wipmobile.data.model.ModelProgress
+import com.example.wipmobile.data.source.remote.api.RemoteHost
 import com.google.gson.annotations.SerializedName
 import java.time.Instant
 
@@ -23,21 +24,23 @@ data class ModelProgressResponse(
     val time: Double,
     @SerializedName("get_last_image_url")
     val imagePath: String?,
-    @SerializedName("user_status_id")
-    val statusId: Int,
-    @SerializedName("user_status_name")
-    val statusName: String?
+    @SerializedName("user_status")
+    val status: UserStatusResponse,
 ) {
     fun mapToModel(): ModelProgress {
+        val img = if (null == imagePath) {
+            null
+        } else {
+            "${RemoteHost.HOST}$imagePath"
+        }
         return ModelProgress(
             id = id,
             title = title,
             description = description,
             createdAt = createdAt,
             time = time,
-            imagePath = "http://10.0.2.2:8000$imagePath",
-            statusId = statusId,
-            statusName = statusName
+            imagePath = img,
+            status = status.mapToModel(),
         )
     }
 }

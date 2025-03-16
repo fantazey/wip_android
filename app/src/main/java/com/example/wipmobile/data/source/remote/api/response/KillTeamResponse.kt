@@ -6,7 +6,7 @@ class KillTeamResponse(
     private val id: Int,
     private val name: String,
 ) {
-    fun toKillTeam(): KillTeam {
+    fun mapToModel(): KillTeam {
         return KillTeam(id, name)
     }
 }

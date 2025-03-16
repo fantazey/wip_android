@@ -1,6 +1,7 @@
 package com.example.wipmobile.data.source.remote.api.response
 
 import com.example.wipmobile.data.model.Model
+import com.example.wipmobile.data.source.remote.api.RemoteHost
 import com.google.gson.annotations.SerializedName
 
 class ModelResponse(
@@ -16,20 +17,14 @@ class ModelResponse(
     @SerializedName("hours_spent")
     val hoursSpent: Double?,
 
-    @SerializedName("user_status_id")
-    val statusId: Int,
-    @SerializedName("user_status_name")
-    val statusName: String,
+    @SerializedName("user_status")
+    val status: UserStatusResponse,
 
-    @SerializedName("battlescribe_unit_id")
-    val battleScribeUnitId: Int?,
-    @SerializedName("battlescribe_unit_name")
-    val battleScribeUnitName: String?,
+    @SerializedName("battlescribe_unit")
+    val battleScribeUnit: BattleScribeUnitResponse?,
 
-    @SerializedName("kill_team_id")
-    val killTemId: Int?,
-    @SerializedName("kill_team_name")
-    val killTemName: String?,
+    @SerializedName("kill_team")
+    val killTem: KillTeamResponse?,
 
     val groups: List<ModelGroupResponse>?
 
@@ -42,15 +37,13 @@ class ModelResponse(
             isTerrain = isTerrain,
             hoursSpent = hoursSpent ?: 0.0,
 
-            statusId = statusId,
-            statusName = statusName,
-            lastImagePath = "http://10.0.2.2:8000$imagePath",
-            battleScribeUnitId = battleScribeUnitId,
-            battleScribeUnitName = battleScribeUnitName,
-            killTeamId = killTemId,
-            killTeamName = killTemName,
+            status = status.mapToModel(),
+            lastImagePath = "${RemoteHost.HOST}$imagePath",
 
-            groups = groups?.map { it2 -> it2.toModelGroup() }?.toList() ?: emptyList()
+            battleScribeUnit = battleScribeUnit?.mapToModel(),
+            killTeam = killTem?.mapToModel(),
+
+            groups = groups?.map { it2 -> it2.mapToModel() }?.toList() ?: emptyList()
         )
     }
 }

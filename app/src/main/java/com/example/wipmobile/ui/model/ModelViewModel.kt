@@ -34,9 +34,9 @@ class ModelViewModel @Inject constructor(
         }
     }
 
-    private fun selectModel(model: Model) {
-        uiState.value = uiState.value.copy(model=model, isLoading = false)
-        loadData(model)
+    private fun selectModel(modelToSelect: Model) {
+        uiState.value = uiState.value.copy(model=modelToSelect, isLoading = false, loaded = false)
+        loadData(modelToSelect)
     }
 
     private fun loadData(modelToLoad: Model) {

@@ -29,7 +29,7 @@ import kotlin.math.truncate
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun ModelImage(path: String?, modifier: Modifier = Modifier) {
+fun ModelImage(path: String?, showStub: Boolean, modifier: Modifier = Modifier) {
     if (path != null) {
         GlideImage(
             model=path,
@@ -37,7 +37,7 @@ fun ModelImage(path: String?, modifier: Modifier = Modifier) {
             contentScale = ContentScale.Crop,
             modifier = modifier.width(100.dp).height(100.dp).clip(RoundedCornerShape(16.dp)),
         )
-    } else {
+    } else if (showStub) {
         Image(
             painter = painterResource(R.drawable.models_default_picture),
             contentDescription = "",

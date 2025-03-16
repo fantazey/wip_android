@@ -37,19 +37,19 @@ class ModelRemoteDataSource @Inject constructor(
     }
 
     suspend fun getUserStatusList(): List<UserStatus> {
-        return wipApi.getUserStatuses().map { it.toUserStatus() }.toImmutableList()
+        return wipApi.getUserStatuses().map { it.mapToModel() }.toImmutableList()
     }
 
     suspend fun getKillTeamList(): List<KillTeam> {
-        return wipApi.getKillTeams().map { it.toKillTeam() }.toImmutableList()
+        return wipApi.getKillTeams().map { it.mapToModel() }.toImmutableList()
     }
 
     suspend fun getBattleScribeUnitList(): List<BattleScribeUnit> {
-        return wipApi.getBattleScribeUnits().map { it.toBattleScribeUnit() }.toImmutableList()
+        return wipApi.getBattleScribeUnits().map { it.mapToModel() }.toImmutableList()
     }
 
     suspend fun getModelGroups(): List<ModelGroup> {
-        return wipApi.getModelGroups().map { it.toModelGroup() }.toImmutableList()
+        return wipApi.getModelGroups().map { it.mapToModel() }.toImmutableList()
     }
 
     data class LoadModelsFilter(

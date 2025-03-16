@@ -45,6 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.wipmobile.data.model.BattleScribeUnit
+import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.data.model.ModelGroup
 import com.example.wipmobile.data.model.UserStatus
@@ -120,7 +122,7 @@ fun ModelCard(model: Model, selectModel: (model: Model) -> Unit) {
                 .fillMaxWidth()
                 .padding(5.dp)
         ) {
-            ModelImage(model.lastImagePath)
+            ModelImage(model.lastImagePath, true)
             ModelData(
                 model, modifier = Modifier
                     .fillMaxWidth()
@@ -137,17 +139,11 @@ fun ModelCardPreview() {
     val model = Model(
         id = 1,
         name = "Chaos Space Marines: Fabius Bile",
-        statusId = 1,
-        statusName = "Загрунтовано",
-
+        status = UserStatus(id=1, name = "test status1"),
         lastImagePath = null,
         hoursSpent = 90.52,
-
-        battleScribeUnitId = 1,
-        battleScribeUnitName = "BattleSribe badge text",
-
-        killTeamId = 1,
-        killTeamName = "KT Badge text",
+        battleScribeUnit = BattleScribeUnit(id=1, name="text"),
+        killTeam = KillTeam(id=1, "text"),
         groups = listOf(
             ModelGroup(id = 1, name = " группа 1"),
             ModelGroup(id = 2, name = " группа 2")
@@ -167,7 +163,7 @@ fun ModelData(model: Model, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(2.dp))
         ModelName(model.name)
         Spacer(modifier = Modifier.height(5.dp))
-        ModelStatus(model.statusName)
+        ModelStatus(model.status.name)
         Spacer(modifier = Modifier.height(5.dp))
         ModelHoursSpend(model.hoursSpent)
         Spacer(modifier = Modifier.height(5.dp))
@@ -177,14 +173,14 @@ fun ModelData(model: Model, modifier: Modifier = Modifier) {
             }
         }
         Spacer(modifier = Modifier.height(5.dp))
-        if (null != model.killTeamName) {
+        if (null != model.killTeam) {
             Spacer(modifier = Modifier.height(2.dp))
-            KillTeamBadge(model.killTeamName)
+            KillTeamBadge(model.killTeam.name)
             Spacer(modifier = Modifier.height(2.dp))
         }
-        if (null != model.battleScribeUnitName) {
+        if (null != model.battleScribeUnit) {
             Spacer(modifier = Modifier.height(2.dp))
-            BattleScribeBadge(model.battleScribeUnitName)
+            BattleScribeBadge(model.battleScribeUnit.name)
             Spacer(modifier = Modifier.height(2.dp))
         }
     }
@@ -235,17 +231,11 @@ fun ModelDataPreview() {
     val model = Model(
         id = 1,
         name = "Chaos Space Marines: Fabius Bile",
-        statusId = 1,
-        statusName = "Загрунтовано",
-
+        status = UserStatus(id=1, name = "test status1"),
         lastImagePath = null,
         hoursSpent = 90.1,
-
-        battleScribeUnitId = 1,
-        battleScribeUnitName = "BattleSribe badge text",
-
-        killTeamId = 1,
-        killTeamName = "KT Badge text",
+        battleScribeUnit = BattleScribeUnit(id=1, name="text"),
+        killTeam = KillTeam(id=1, "text"),
         groups = listOf(
             ModelGroup(id = 1, name = " группа 1"),
             ModelGroup(id = 2, name = " группа 2")

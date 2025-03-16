@@ -1,6 +1,7 @@
 package com.example.wipmobile.data.source.remote.api.response
 
 import com.example.wipmobile.data.model.ModelImage
+import com.example.wipmobile.data.source.remote.api.RemoteHost
 import com.google.gson.annotations.SerializedName
 import java.time.Instant
 
@@ -22,7 +23,7 @@ data class ModelImageResponse(
     fun mapToModel(): ModelImage {
         return ModelImage(
             id = id,
-            imagePath = "http://10.0.2.2:8000$imagePath",
+            imagePath = "${RemoteHost.HOST}$imagePath",
             isImageForProgress = isImageForProgress,
             createdAt = createdAt
         )

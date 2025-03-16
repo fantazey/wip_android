@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.wipmobile.data.model.BattleScribeUnit
+import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.ui.models.ModelsUiState
 import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.data.model.ModelGroup
+import com.example.wipmobile.data.model.UserStatus
 import com.example.wipmobile.ui.components.ErrorDialog
 import com.example.wipmobile.ui.models.ModelsEvent
 import com.example.wipmobile.ui.models.ModelsListContainer
@@ -48,16 +51,11 @@ fun ModelsScreenPreview() {
     val model1 = Model(
         id = 1,
         name = "test 1",
-        statusId = 1,
-        statusName = "test status1",
+        status = UserStatus(id=1, name = "test status1"),
         lastImagePath = null,
         hoursSpent = 90.1,
-
-        battleScribeUnitId = 1,
-        battleScribeUnitName = "BattleSribe badge text",
-
-        killTeamId = 1,
-        killTeamName = "KT Badge text",
+        battleScribeUnit = BattleScribeUnit(id=1, name = "BattleSribe badge text"),
+        killTeam = KillTeam(id=1, name="KT Badge text"),
         groups = listOf(
             ModelGroup(id = 1, name = " группа 1"),
             ModelGroup(id = 2, name = " группа 2")
@@ -68,16 +66,11 @@ fun ModelsScreenPreview() {
     val model2 = Model(
         id = 1,
         name = "test 1",
-        statusId = 1,
-        statusName = "test status2",
+        status = UserStatus(id=1, name = "test status2"),
         lastImagePath = "path to img",
         hoursSpent = 90.1,
-
-        battleScribeUnitId = 1,
-        battleScribeUnitName = "BattleSribe badge text",
-
-        killTeamId = 1,
-        killTeamName = "KT Badge text",
+        battleScribeUnit = null,
+        killTeam = null,
         groups = listOf(
             ModelGroup(id = 1, name = " группа 1"),
             ModelGroup(id = 2, name = " группа 2")
@@ -88,16 +81,11 @@ fun ModelsScreenPreview() {
     val model3 = Model(
         id = 1,
         name = "test 1",
-        statusId = 1,
-        statusName = "test status3",
+        status = UserStatus(id=1, name = "test status3"),
         lastImagePath = null,
         hoursSpent = 90.1,
-
-        battleScribeUnitId = 1,
-        battleScribeUnitName = "BattleSribe badge text",
-
-        killTeamId = 1,
-        killTeamName = "KT Badge text",
+        battleScribeUnit = null,
+        killTeam = null,
         groups = listOf(
             ModelGroup(id = 1, name = " группа 1"),
             ModelGroup(id = 2, name = " группа 2")

@@ -6,7 +6,7 @@ data class ModelGroupResponse(
     val id: Int,
     val name: String
 ) {
-    fun toModelGroup(): ModelGroup {
+    fun mapToModel(): ModelGroup {
         return ModelGroup(
             id = id,
             name = name
