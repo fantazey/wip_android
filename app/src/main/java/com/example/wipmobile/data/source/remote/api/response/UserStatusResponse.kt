@@ -12,4 +12,16 @@ class UserStatusResponse(
     fun mapToModel(): UserStatus {
         return UserStatus(id, name, order, previous, next)
     }
+
+    companion object {
+        fun fromModel(status: UserStatus): UserStatusResponse {
+            return UserStatusResponse(
+                id = status.id,
+                name = status.name,
+                order = status.order,
+                previous = status.previous,
+                next = status.next
+            )
+        }
+    }
 }

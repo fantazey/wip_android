@@ -155,7 +155,7 @@ fun WipAppScreen(
             composable(route = WipScreen.AddModel.name) {
                 AddModelScreen(
                     uiState = addModelUiState,
-                    eventHandler = addModelEventHandler,
+                    handleEvent = addModelEventHandler,
                     successCallback = {}
                 )
             }

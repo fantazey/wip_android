@@ -1,5 +1,8 @@
 package com.example.wipmobile.data.source.remote.api
 
+import com.example.wipmobile.data.source.remote.api.request.ModelProgressRequest
+import com.example.wipmobile.data.source.remote.api.request.ModelRequest
+import com.example.wipmobile.data.source.remote.api.response.BattleScribeCategoryResponse
 import com.example.wipmobile.data.source.remote.api.response.BattleScribeUnitResponse
 import com.example.wipmobile.data.source.remote.api.response.KillTeamResponse
 import com.example.wipmobile.data.source.remote.api.response.ModelGroupResponse
@@ -8,7 +11,11 @@ import com.example.wipmobile.data.source.remote.api.response.ModelProgressRespon
 import com.example.wipmobile.data.source.remote.api.response.ModelResponse
 import com.example.wipmobile.data.source.remote.api.response.PagedModelResponse
 import com.example.wipmobile.data.source.remote.api.response.UserStatusResponse
+import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -45,6 +52,24 @@ interface WipApi {
     @GET("wip/api/bs-units/")
     suspend fun getBattleScribeUnits(): List<BattleScribeUnitResponse>
 
+    @GET("wip/api/bs-categories/")
+    suspend fun getBattleScribeCategories(): List<BattleScribeCategoryResponse>
+
     @GET("wip/api/model-groups/")
     suspend fun getModelGroups(): List<ModelGroupResponse>
+
+    @POST("wip/api/models/")
+    suspend fun createModel(@Body body: ModelRequest): ModelResponse
+
+    @PUT("wip/api/models/{id}/")
+    suspend fun updateModel(@Path("id") modelId: Int, @Body body: ModelRequest): ModelResponse
+
+    @POST("wip/api/models/{id}/progress/")
+    suspend fun createModelProgress(@Path("id") modelId: Int, @Body body: ModelProgressRequest): ModelProgressResponse
+
+    @PUT("wip/api/models/{id}/progress/{progress}/")
+    suspend fun updateModelProgress(@Path("id") modelId: Int, @Path("progress") progressId: Int, @Body body: ModelProgressRequest): ModelProgressResponse
+
+    @DELETE("wip/api/models/{id}/progress/{progress}/")
+    suspend fun deleteModelProgress(@Path("id") modelId: Int, @Path("progress") progressId: Int)
 }

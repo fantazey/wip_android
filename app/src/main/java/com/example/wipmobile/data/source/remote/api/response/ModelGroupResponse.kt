@@ -12,4 +12,13 @@ data class ModelGroupResponse(
             name = name
         )
     }
+
+    companion object {
+        fun fromModel(group: ModelGroup): ModelGroupResponse {
+            return ModelGroupResponse(
+                id=group.id,
+                name = group.name
+            )
+        }
+    }
 }
