@@ -1,5 +1,6 @@
 package com.example.wipmobile.data
 
+import android.graphics.Bitmap
 import com.example.wipmobile.data.dto.AddModelFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
@@ -86,5 +87,8 @@ class ModelsRepository @Inject constructor(
         return remoteDataSource.updateModelProgress(modelId, progressId, progress)
     }
 
+    suspend fun createModelImage(model: Model, images: List<Bitmap>): List<ModelImage> {
+        return remoteDataSource.createModelImage(model.id, images)
+    }
 
 }

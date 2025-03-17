@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,51 +49,37 @@ import com.example.wipmobile.data.dto.AddModelFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
+import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.data.model.ModelGroup
 import com.example.wipmobile.data.model.UserStatus
-import okhttp3.internal.toImmutableList
 
 
 @Composable
 fun AddModelFormContainer(
     uiState: AddModelUiState,
     handleEvent: (e: AddModelEvent) -> Unit,
+    successCallback: (model: Model) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var category: BattleScribeCategory? by remember { mutableStateOf(null) }
-    var name: String by remember { mutableStateOf("") }
-    var unitCount: Int by remember { mutableStateOf(1) }
-    var terrain: Boolean by remember { mutableStateOf(false) }
-    var status: UserStatus? by remember { mutableStateOf(null) }
-    val groups = remember { mutableStateListOf<ModelGroup>() }
-    var battleScribeUnit: BattleScribeUnit? by remember { mutableStateOf(null) }
-    var battleScribeCategory: BattleScribeCategory? by remember { mutableStateOf(null) }
-    var killTeam: KillTeam? by remember { mutableStateOf(null) }
     val context = LocalContext.current
-    val successCallback = {
-        Toast.makeText(context, "Модель сохранена", Toast.LENGTH_LONG).show()
-    }
-    val validateFormAndSave = {
+    val validateFormAndSave = { formData: AddModelFormData ->
         val errors = mutableListOf<String>()
-        if (name.isEmpty()) {
+        if (formData.name.isEmpty()) {
             errors.add("Название не заполнено")
         }
-        if (unitCount == 0) {
+        if (formData.unitCount == 0) {
             errors.add("Количество юнитов должно быть больше 0")
         }
-        if (null == status) {
+        if (null == formData.status) {
             errors.add("Статус должен быть выбран")
         }
         if (errors.isEmpty()) {
-            val data = AddModelFormData(
-                name = name,
-                unitCount=unitCount,
-                status = status!!,
-                groups = groups,
-                battleScribeUnit = battleScribeUnit,
-                killTeam = killTeam
+            handleEvent(
+                AddModelEvent.SaveModel(
+                    formData = formData,
+                    successCallback = successCallback,
+                    errorCallback = {})
             )
-            handleEvent(AddModelEvent.SaveModel(formData = data, successCallback = successCallback, errorCallback = {}))
         } else {
             Toast.makeText(context, errors.joinToString(","), Toast.LENGTH_LONG).show()
         }
@@ -110,157 +97,206 @@ fun AddModelFormContainer(
                 .padding(32.dp, 0.dp),
             elevation = CardDefaults.cardElevation(4.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Absolute.Left
-                ) {
-                    Text("Название")
-                    Spacer(modifier = modifier.width(10.dp))
-                    BasicTextField(
-                        modifier = modifier
-                            .border(width = 1.dp, color = Color.DarkGray)
-                            .fillMaxWidth(),
-                        value = name,
-                        onValueChange = { newVal ->
-                            name = newVal
-                        },
-                        singleLine = true,
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Absolute.Left
-                ) {
-                    Text("Количество юнитов")
-                    Spacer(modifier = modifier.width(10.dp))
-                    BasicTextField(
-                        modifier = modifier
-                            .border(width = 1.dp, color = Color.DarkGray)
-                            .fillMaxWidth(),
-                        value = unitCount.toString(),
-                        onValueChange = { newVal ->
-                            unitCount = newVal.toInt()
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        ),
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Absolute.Left
-                ) {
-                    Text("Статус")
-                    Spacer(modifier = modifier.width(10.dp))
-                    StatusDropDown(
-                        statuses = uiState.userStatuses,
-                        selected = status,
-                        onChange = { newValue ->
-                            status = newValue
-                        }
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Absolute.Left
-                ) {
-                    Text("Террейн")
-                    Spacer(modifier = modifier.width(10.dp))
-                    Checkbox(
-                        checked = terrain,
-                        onCheckedChange = { newValue ->
-                            terrain = newValue
-                        }
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Absolute.Left
-                ) {
-                    Text("Килл тим")
-                    Spacer(modifier = modifier.width(10.dp))
-                    KillTeamDropDown(
-                        items = uiState.killTeams,
-                        selected = killTeam,
-                        onChange = { newValue ->
-                            killTeam = newValue
-                        }
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Absolute.Left
-                ) {
-                    Text("Категория BS")
-                    Spacer(modifier = modifier.width(10.dp))
-                    BattleScribeCategoryDropDown(
-                        items = uiState.battleScribeCategories,
-                        selected = battleScribeCategory,
-                        onChange = { newValue ->
-                            battleScribeCategory = newValue
-                            category = newValue
-                        }
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Absolute.Left
-                ) {
-                    Text("Юнит BS")
-                    Spacer(modifier = modifier.width(10.dp))
-                    BattleScribeUnitDropDown(
-                        items = uiState.battleScribeUnits,
-                        selected = battleScribeUnit,
-                        category = category,
-                        onChange = { newValue ->
-                            battleScribeUnit = newValue
-                            name = newValue.name
-                        }
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Absolute.Left
-                ) {
-                    Text("Группы")
-                    Spacer(modifier = modifier.width(10.dp))
-                    ModelGroupDropDown(
-                        items = uiState.modelGroups,
-                        selectedValues = groups,
-                        onChange = { selected: ModelGroup ->
-                            if (groups.contains(selected)) {
-                                groups.remove(selected)
-                            } else {
-                                groups.add(selected)
-                            }
-                        }
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                AddModelSaveButton(onClick = validateFormAndSave)
-            }
+            ModelForm(
+                init = AddModelFormData(),
+                userStatuses = uiState.userStatuses,
+                modelGroups = uiState.modelGroups,
+                killTeams = uiState.killTeams,
+                battleScribeCategories = uiState.battleScribeCategories,
+                battleScribeUnits = uiState.battleScribeUnits,
+                saveCallback = validateFormAndSave
+            )
         }
     }
 }
+
+@Composable
+fun ModelForm(
+    init: AddModelFormData,
+    userStatuses: List<UserStatus>,
+    killTeams: List<KillTeam>,
+    modelGroups: List<ModelGroup>,
+    battleScribeCategories: List<BattleScribeCategory>,
+    battleScribeUnits: List<BattleScribeUnit>,
+    saveCallback: (e: AddModelFormData) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+
+    var name: String by remember { mutableStateOf(init.name) }
+    var unitCount: Int by remember { mutableIntStateOf(init.unitCount) }
+    var terrain: Boolean by remember { mutableStateOf(init.terrain) }
+    var status: UserStatus? by remember { mutableStateOf(init.status) }
+    val groups = remember { mutableStateListOf<ModelGroup>().apply { addAll(init.groups) } }
+    var battleScribeUnit: BattleScribeUnit? by remember { mutableStateOf(init.battleScribeUnit) }
+    val initCategory = if (init.battleScribeUnit?.category != null) {
+        battleScribeCategories.first { it.id == init.battleScribeUnit.category.id }
+    } else {
+        null
+    }
+    var battleScribeCategory: BattleScribeCategory? by remember { mutableStateOf(initCategory) }
+    var killTeam: KillTeam? by remember { mutableStateOf(null) }
+
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Название")
+            Spacer(modifier = modifier.width(10.dp))
+            BasicTextField(
+                modifier = modifier
+                    .border(width = 1.dp, color = Color.DarkGray)
+                    .fillMaxWidth(),
+                value = name,
+                onValueChange = { newVal ->
+                    name = newVal
+                },
+                singleLine = true,
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Количество юнитов")
+            Spacer(modifier = modifier.width(10.dp))
+            BasicTextField(
+                modifier = modifier
+                    .border(width = 1.dp, color = Color.DarkGray)
+                    .fillMaxWidth(),
+                value = unitCount.toString(),
+                onValueChange = { newVal ->
+                    unitCount = newVal.toInt()
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Статус")
+            Spacer(modifier = modifier.width(10.dp))
+            StatusDropDown(
+                statuses = userStatuses,
+                selected = status,
+                onChange = { newValue ->
+                    status = newValue
+                }
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Террейн")
+            Spacer(modifier = modifier.width(10.dp))
+            Checkbox(
+                checked = terrain,
+                onCheckedChange = { newValue ->
+                    terrain = newValue
+                }
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Килл тим")
+            Spacer(modifier = modifier.width(10.dp))
+            KillTeamDropDown(
+                items = killTeams,
+                selected = killTeam,
+                onChange = { newValue ->
+                    killTeam = newValue
+                }
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Категория BS")
+            Spacer(modifier = modifier.width(10.dp))
+            BattleScribeCategoryDropDown(
+                items = battleScribeCategories,
+                selected = battleScribeCategory,
+                onChange = { newValue ->
+                    battleScribeCategory = newValue
+                }
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Юнит BS")
+            Spacer(modifier = modifier.width(10.dp))
+            BattleScribeUnitDropDown(
+                items = battleScribeUnits,
+                selected = battleScribeUnit,
+                category = battleScribeCategory,
+                onChange = { newValue ->
+                    battleScribeUnit = newValue
+                    name = newValue.name
+                }
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Группы")
+            Spacer(modifier = modifier.width(10.dp))
+            ModelGroupDropDown(
+                items = modelGroups,
+                selectedValues = groups,
+                onChange = { selected: ModelGroup ->
+                    if (groups.contains(selected)) {
+                        groups.remove(selected)
+                    } else {
+                        groups.add(selected)
+                    }
+                }
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        AddModelSaveButton(onClick = {
+            saveCallback(
+                AddModelFormData(
+                    name = name,
+                    groups = groups,
+                    terrain = terrain,
+                    status = status,
+                    battleScribeUnit = battleScribeUnit,
+                    killTeam = killTeam,
+                    unitCount = unitCount
+                )
+            )
+        })
+    }
+}
+
 
 @Composable
 fun AddModelTitle() {
@@ -554,5 +590,6 @@ fun AddModelFormPreview() {
     AddModelFormContainer(
         uiState = uiState,
         handleEvent = {},
+        successCallback = {}
     )
 }

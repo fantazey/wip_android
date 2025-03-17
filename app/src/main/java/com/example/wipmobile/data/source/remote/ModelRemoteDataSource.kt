@@ -1,5 +1,7 @@
 package com.example.wipmobile.data.source.remote
 
+import android.graphics.Bitmap
+import android.media.Image
 import com.example.wipmobile.data.dto.AddModelFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
@@ -17,8 +19,18 @@ import com.example.wipmobile.data.source.remote.api.response.BattleScribeUnitRes
 import com.example.wipmobile.data.source.remote.api.response.KillTeamResponse
 import com.example.wipmobile.data.source.remote.api.response.ModelGroupResponse
 import com.example.wipmobile.data.source.remote.api.response.UserStatusResponse
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.toImmutableList
+import okio.ByteString
+import java.io.ByteArrayOutputStream
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+
 
 class ModelRemoteDataSource @Inject constructor(
     private val wipApi: WipApi
@@ -84,7 +96,7 @@ class ModelRemoteDataSource @Inject constructor(
             name = form.name,
             unitCount = form.unitCount,
             terrain = form.terrain,
-            status = UserStatusResponse.fromModel(form.status),
+            status = UserStatusResponse.fromModel(form.status!!),
             groups = form.groups.map { ModelGroupResponse.fromModel(it) }.toImmutableList(),
             battleScribeUnit = bsUnit,
             killTeam = killTeam
@@ -106,5 +118,21 @@ class ModelRemoteDataSource @Inject constructor(
 
     suspend fun deleteModelProgress(modelId: Int, progressId: Int) {
         wipApi.deleteModelProgress(modelId, progressId)
+    }
+
+    suspend fun createModelImage(modelId: Int, images: List<Bitmap>): List<ModelImage> {
+        val imageParts = Array<MultipartBody.Part>(size = images.size, init = { index: Int ->
+            val image = images[index]
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+            val requestBody: RequestBody = byteArrayOutputStream.toByteArray().toRequestBody(contentType = "image/*".toMediaTypeOrNull())
+            val name = "${modelId}_${Instant.now()}.jpeg"
+            MultipartBody.Part.createFormData("images", name, requestBody)
+        })
+        return wipApi.createModelImage(modelId, imageParts).map { it.mapToModel() }.toImmutableList()
+    }
+
+    suspend fun deleteModelImage(modelId: Int, imageId: Int) {
+        wipApi.deleteModelImage(modelId, imageId)
     }
 }

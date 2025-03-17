@@ -7,6 +7,7 @@ import com.example.wipmobile.data.dto.AddModelFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
+import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.data.model.ModelGroup
 import com.example.wipmobile.data.model.UserStatus
 import kotlinx.coroutines.Dispatchers
@@ -78,15 +79,17 @@ class AddModelViewModel @Inject constructor(
 
     private fun saveModel(
         formData: AddModelFormData,
-        successCallback: () -> Unit,
+        successCallback: (model: Model) -> Unit,
         errorCallback: () -> Unit
     ) {
         uiState.value = uiState.value.copy(isLoading = true)
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                modelsRepository.createModel(formData)
+                val model = modelsRepository.createModel(formData)
                 uiState.value = uiState.value.copy(isLoading = false)
-                successCallback()
+                withContext(Dispatchers.Main) {
+                    successCallback(model)
+                }
             } catch (ex: Exception) {
                 withContext(Dispatchers.Main) {
                     uiState.value = uiState.value.copy(isLoading = false, error = ex.message)

@@ -1,13 +1,26 @@
 package com.example.wipmobile.ui.model
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,11 +28,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -27,11 +43,16 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,11 +73,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,8 +90,12 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.FileProvider
+import com.android.volley.BuildConfig
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.example.wipmobile.R
+import com.example.wipmobile.data.dto.AddModelFormData
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.data.model.Model
@@ -74,28 +103,44 @@ import com.example.wipmobile.data.model.ModelGroup
 import com.example.wipmobile.data.model.ModelImage
 import com.example.wipmobile.data.model.ModelProgress
 import com.example.wipmobile.data.model.UserStatus
+import com.example.wipmobile.ui.add_model.ModelForm
 import com.example.wipmobile.ui.components.ModelHoursSpend
 import com.example.wipmobile.ui.components.ModelImage
 import com.example.wipmobile.ui.components.ModelStatus
-import com.example.wipmobile.ui.models.ModelData
+import com.example.wipmobile.ui.models.ModelName
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Objects
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
+@RequiresApi(Build.VERSION_CODES.P)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModelCard(
-    model: Model,
-    progress: List<ModelProgress>,
-    images: List<ModelImage>,
+    uiState: ModelUiState,
     handleEvent: (e: ModelEvent) -> Unit,
     navigateBackCallback: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val model: Model = uiState.model!!
+    val progress: List<ModelProgress> = uiState.progress
+    val images: List<ModelImage> = uiState.images
     var selectedTab by remember { mutableIntStateOf(0) }
     var editMode by remember { mutableStateOf(false) }
     val tabs = arrayOf("Модель", "Лог работ", "Галерея")
+    val saveImages = { imagesToUpload: List<Bitmap>, resetCallback: () -> Unit ->
+        handleEvent(
+            ModelEvent.UploadImages(
+                model = model,
+                images = imagesToUpload,
+                resetCallback = resetCallback
+            )
+        )
+    }
     Scaffold(
         topBar = {
             ModelTopBar(
@@ -141,7 +186,19 @@ fun ModelCard(
             }
             when (selectedTab) {
                 0 -> {
-                    ModelMain(model)
+                    if (editMode) {
+                        ModelForm(
+                            init = AddModelFormData(),
+                            userStatuses = uiState.userStatuses,
+                            modelGroups = uiState.modelGroups,
+                            killTeams = uiState.killTeams,
+                            battleScribeCategories = uiState.battleScribeCategories,
+                            battleScribeUnits = uiState.battleScribeUnits,
+                            saveCallback = {}
+                        )
+                    } else {
+                        ModelMain(model)
+                    }
                 }
 
                 1 -> {
@@ -149,7 +206,7 @@ fun ModelCard(
                 }
 
                 2 -> {
-                    ModelPictures(images)
+                    ModelPictures(images, saveImages = saveImages)
                 }
 
                 else -> {
@@ -161,6 +218,7 @@ fun ModelCard(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 @Preview
 fun ModelCardPreview() {
@@ -176,10 +234,13 @@ fun ModelCardPreview() {
         battleScribeUnit = BattleScribeUnit(id = 1, name = "text"),
         killTeam = KillTeam(id = 1, "text"),
     )
-    ModelCard(
+    val uiState = ModelUiState(
         model = model,
         progress = emptyList(),
-        images = emptyList(),
+        images = emptyList()
+    )
+    ModelCard(
+        uiState = uiState,
         navigateBackCallback = {},
         handleEvent = {})
 }
@@ -249,16 +310,92 @@ fun ModelTopBarPreview() {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModelMain(model: Model) {
-    PullToRefreshBox(isRefreshing = false, onRefresh = {}) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            ModelData(
-                model, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(PaddingValues(5.dp, 0.dp))
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(5.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Название")
+            Spacer(modifier = Modifier.width(12.dp))
+            ModelName(model.name)
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Статус")
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(model.status.name)
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Группы")
+            Spacer(modifier = Modifier.width(12.dp))
+            model.groups.map {
+                Text(it.name)
+                Spacer(modifier = Modifier.width(5.dp))
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Киллтим")
+            Spacer(modifier = Modifier.width(12.dp))
+            if (null != model.killTeam) {
+                Text(model.killTeam.name)
+            } else {
+                Text("Не указано")
+            }
+
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Юнит BS")
+            Spacer(modifier = Modifier.width(12.dp))
+            if (null != model.battleScribeUnit) {
+                Text(model.battleScribeUnit.name)
+            } else {
+                Text("Не указано")
+            }
+
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Террейн")
+            Spacer(modifier = Modifier.width(12.dp))
+            if (model.isTerrain) {
+                Text("Дв")
+            } else {
+                Text("Нет")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Времени затрачено")
+            Spacer(modifier = Modifier.width(12.dp))
+            ModelHoursSpend(model.hoursSpent)
         }
     }
 }
@@ -348,8 +485,12 @@ fun ModelWorkLogItemPreview() {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.P)
 @Composable
-fun ModelPictures(images: List<ModelImage>) {
+fun ModelPictures(
+    images: List<ModelImage>,
+    saveImages: (images: List<Bitmap>, resetCallback: () -> Unit) -> Unit
+) {
     var dialogVisible by remember { mutableStateOf(false) }
     var selectedImagePath: String? by remember { mutableStateOf(null) }
     Box() {
@@ -368,14 +509,155 @@ fun ModelPictures(images: List<ModelImage>) {
             }
         }
         LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 128.dp)) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .size(128.dp)
+                        .fillMaxHeight()
+                        .border(width = 1.dp, color = Color.Black)
+                ) {
+                    ImagePicker(type = ImagePickerType.Camera, saveImages = saveImages)
+                }
+            }
+            item {
+                Box(
+                    modifier = Modifier
+                        .size(128.dp)
+                        .fillMaxHeight()
+                        .border(width = 1.dp, color = Color.Black)
+                ) {
+                    ImagePicker(type = ImagePickerType.Gallery, saveImages = saveImages)
+                }
+            }
             items(images) { image ->
-                ModelImage(image.imagePath, false, modifier = Modifier.clickable {
-                    dialogVisible = true
-                    selectedImagePath = image.imagePath!!
-                })
+                Box(
+                    modifier = Modifier
+                        .size(128.dp)
+                        .fillMaxHeight()
+                        .border(width = 1.dp, color = Color.Black)
+                ) {
+                    ModelImage(
+                        image.imagePath,
+                        false,
+                        size = 128.dp,
+                        modifier = Modifier.clickable {
+                            dialogVisible = true
+                            selectedImagePath = image.imagePath!!
+                        })
+                }
+            }
+        }
+
+    }
+}
+
+enum class ImagePickerType {
+    Camera, Gallery
+}
+
+@RequiresApi(Build.VERSION_CODES.P)
+@Composable
+fun ImagePicker(
+    type: ImagePickerType,
+    saveImages: (image: List<Bitmap>, resetCallback: () -> Unit) -> Unit
+) {
+    val context = LocalContext.current
+    var currentPhotoUri by remember { mutableStateOf(value = Uri.EMPTY) }
+    val file = context.createImageFile()
+    val uri = FileProvider.getUriForFile(
+        Objects.requireNonNull(context),
+        "${com.example.wipmobile.BuildConfig.APPLICATION_ID}.provider",
+        file
+    )
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                currentPhotoUri = uri
+            }
+        }
+    )
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { galleryUri: Uri? ->
+            if (null != galleryUri && galleryUri.toString().isNotEmpty()) {
+                currentPhotoUri = galleryUri
+            }
+        }
+    )
+    val resetCallback = {
+        currentPhotoUri = Uri.EMPTY
+    }
+    val onClickHandler = {
+        if (currentPhotoUri.toString().isNotEmpty()) {
+            val imageResource = ImageDecoder.createSource(context.contentResolver, currentPhotoUri)
+            val imageBitmap = ImageDecoder.decodeBitmap(imageResource)
+            saveImages(listOf(imageBitmap), resetCallback)
+        } else {
+            if (type == ImagePickerType.Camera) {
+                cameraLauncher.launch(uri)
+            } else {
+                galleryLauncher.launch("image/*")
+            }
+
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.LightGray)
+    ) {
+        if (currentPhotoUri.toString().isNotEmpty()) {
+            Image(
+                bitmap = ImageDecoder.decodeBitmap(
+                    ImageDecoder.createSource(
+                        context.contentResolver,
+                        currentPhotoUri
+                    )
+                ).asImageBitmap(),
+                contentDescription = "",
+                modifier = Modifier.size(128.dp)
+            )
+        }
+
+        IconButton(
+            onClick = onClickHandler,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxSize()
+        ) {
+            if (currentPhotoUri.toString().isNotEmpty()) {
+                Icon(contentDescription = "", imageVector = Icons.Default.Save, tint = Color.White)
+            } else {
+                if (type == ImagePickerType.Camera) {
+                    Icon(
+                        contentDescription = "",
+                        imageVector = Icons.Default.Camera,
+                        tint = Color.White
+                    )
+                }
+                if (type == ImagePickerType.Gallery) {
+                    Icon(
+                        contentDescription = "",
+                        imageVector = Icons.Default.Image,
+                        tint = Color.White
+                    )
+                }
             }
         }
     }
+}
+
+fun Context.createImageFile(): File {
+    // Create an image file name
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+    val imageFileName = "JPEG_" + timeStamp + "_"
+    return File.createTempFile(
+        imageFileName, /* prefix */
+        ".jpg", /* suffix */
+        externalCacheDir /* directory */
+    )
 }
 
 @Composable

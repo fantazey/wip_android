@@ -5,7 +5,8 @@ data class AuthenticationUiState(
     val password: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val authenticated: Boolean = false
+    val authenticated: Boolean = false,
+    val authChecked: Boolean = false
 ) {
     fun isFormValid(): Boolean {
         return password?.isNotBlank() == true && login?.isNotBlank() == true

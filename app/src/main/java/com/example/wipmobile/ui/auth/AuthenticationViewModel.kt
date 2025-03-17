@@ -46,7 +46,7 @@ class AuthenticationViewModel @Inject constructor(
                 callback()
             }
             uiState.update {
-                it.copy(authenticated = authenticated, isLoading = false)
+                it.copy(authenticated = authenticated, isLoading = false, authChecked = true)
             }
         }
     }

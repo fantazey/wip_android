@@ -9,7 +9,7 @@ data class AddModelFormData(
     val name: String = "",
     val unitCount: Int = 1,
     val terrain: Boolean = false,
-    val status: UserStatus,
+    val status: UserStatus? = null,
     val groups: List<ModelGroup> = emptyList(),
     val battleScribeUnit: BattleScribeUnit? = null,
     val killTeam: KillTeam? = null

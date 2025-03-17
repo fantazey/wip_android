@@ -21,7 +21,7 @@ fun AuthenticationScreen(
     handleEvent: (event: AuthenticationEvent) -> Unit,
     successAuthCallback: () -> Unit
 ) {
-    if (!authenticationState.authenticated && !authenticationState.isLoading) {
+    if (!authenticationState.authChecked && !authenticationState.isLoading) {
         Log.i("auth screen", "check auth")
         handleEvent(AuthenticationEvent.CheckAuthentication(successAuthCallback))
         Log.i("auth screen", "render form")

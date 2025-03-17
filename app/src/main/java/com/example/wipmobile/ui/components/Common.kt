@@ -19,6 +19,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,20 +30,20 @@ import kotlin.math.truncate
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun ModelImage(path: String?, showStub: Boolean, modifier: Modifier = Modifier) {
+fun ModelImage(path: String?, showStub: Boolean, modifier: Modifier = Modifier, size: Dp = 100.dp) {
     if (path != null) {
         GlideImage(
             model=path,
             contentDescription = "",
             contentScale = ContentScale.Crop,
-            modifier = modifier.width(100.dp).height(100.dp).clip(RoundedCornerShape(16.dp)),
+            modifier = modifier.width(size).height(size).clip(RoundedCornerShape(16.dp)),
         )
     } else if (showStub) {
         Image(
             painter = painterResource(R.drawable.models_default_picture),
             contentDescription = "",
             contentScale = ContentScale.Crop,
-            modifier = modifier.width(100.dp).height(100.dp).clip(RoundedCornerShape(16.dp)),
+            modifier = modifier.width(size).height(size).clip(RoundedCornerShape(16.dp)),
         )
     }
 }

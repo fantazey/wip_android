@@ -1,6 +1,8 @@
 package com.example.wipmobile
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -52,6 +54,7 @@ enum class WipScreen(@StringRes val title: Int) {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun WipApp(
     authenticationViewModel: AuthenticationViewModel = viewModel(),
@@ -91,6 +94,7 @@ fun WipApp(
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.P)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WipAppScreen(
@@ -156,7 +160,10 @@ fun WipAppScreen(
                 AddModelScreen(
                     uiState = addModelUiState,
                     handleEvent = addModelEventHandler,
-                    successCallback = {}
+                    successCallback = { model ->
+                        modelViewModelEventHandler(ModelEvent.Select(model))
+                        navController.navigate(WipScreen.Model.name)
+                    }
                 )
             }
             composable(route = WipScreen.Profile.name) {

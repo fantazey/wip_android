@@ -1,5 +1,6 @@
 package com.example.wipmobile.ui.model
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wipmobile.data.ModelsRepository
@@ -30,6 +31,9 @@ class ModelViewModel @Inject constructor(
             }
             is ModelEvent.Refresh -> {
                 refresh()
+            }
+            is ModelEvent.UploadImages -> {
+                uploadImages(event.model, event.images, event.resetCallback)
             }
         }
     }
@@ -75,5 +79,24 @@ class ModelViewModel @Inject constructor(
     private fun refresh() {
         uiState.value = uiState.value.copy(loaded = false)
         loadData(uiState.value.model!!)
+    }
+
+    private fun uploadImages(model: Model, images: List<Bitmap>, callback: () -> Unit) {
+        uiState.value = uiState.value.copy(isLoading = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                modelsRepository.createModelImage(model, images)
+                callback()
+                refresh()
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    uiState.value = uiState.value.copy(
+                        error = e.message,
+                        isLoading = false,
+                        loaded = true
+                    )
+                }
+            }
+        }
     }
 }
