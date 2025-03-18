@@ -1,6 +1,6 @@
 package com.example.wipmobile.ui.add_model
 
-import com.example.wipmobile.data.dto.AddModelFormData
+import com.example.wipmobile.data.dto.ModelFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
@@ -8,7 +8,7 @@ import com.example.wipmobile.data.model.ModelGroup
 import com.example.wipmobile.data.model.UserStatus
 
 data class AddModelUiState(
-    val formData: AddModelFormData? = null,
+    val formData: ModelFormData? = null,
     val loaded: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,

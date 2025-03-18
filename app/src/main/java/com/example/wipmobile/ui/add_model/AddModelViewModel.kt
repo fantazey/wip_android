@@ -3,7 +3,7 @@ package com.example.wipmobile.ui.add_model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wipmobile.data.ModelsRepository
-import com.example.wipmobile.data.dto.AddModelFormData
+import com.example.wipmobile.data.dto.ModelFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
@@ -78,7 +78,7 @@ class AddModelViewModel @Inject constructor(
     }
 
     private fun saveModel(
-        formData: AddModelFormData,
+        formData: ModelFormData,
         successCallback: (model: Model) -> Unit,
         errorCallback: () -> Unit
     ) {

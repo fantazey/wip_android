@@ -1,8 +1,8 @@
 package com.example.wipmobile.data.source.remote
 
 import android.graphics.Bitmap
-import android.media.Image
-import com.example.wipmobile.data.dto.AddModelFormData
+import com.example.wipmobile.data.dto.ModelFormData
+import com.example.wipmobile.data.dto.ModelProgressFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
@@ -25,16 +25,22 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.toImmutableList
-import okio.ByteString
 import java.io.ByteArrayOutputStream
 import java.time.Instant
-import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 
 class ModelRemoteDataSource @Inject constructor(
     private val wipApi: WipApi
 ) {
+
+    private var userStatus: List<UserStatus> = emptyList()
+    private var modelGroups: List<ModelGroup> = emptyList()
+    private var killTeams: List<KillTeam> = emptyList()
+    private var battleScribeCategories: List<BattleScribeCategory> = emptyList()
+    private var battleScribeUnits: List<BattleScribeUnit> = emptyList()
+
     suspend fun getModels(
         name: String = "",
         page: Int = 1,
@@ -62,28 +68,51 @@ class ModelRemoteDataSource @Inject constructor(
     }
 
     suspend fun getUserStatusList(): List<UserStatus> {
-        return wipApi.getUserStatuses().map { it.mapToModel() }.toImmutableList()
+        if (userStatus.isEmpty()) {
+            userStatus = wipApi.getUserStatuses().map { it.mapToModel() }.toImmutableList()
+        }
+        return userStatus
     }
 
     suspend fun getKillTeamList(): List<KillTeam> {
-        return wipApi.getKillTeams().map { it.mapToModel() }.toImmutableList()
+        if (killTeams.isEmpty()) {
+            killTeams = wipApi.getKillTeams().map { it.mapToModel() }.toImmutableList()
+        }
+        return killTeams
     }
 
     suspend fun getBattleScribeUnitList(): List<BattleScribeUnit> {
-        return wipApi.getBattleScribeUnits().map { it.mapToModel() }.toImmutableList()
+        if (battleScribeUnits.isEmpty()) {
+            battleScribeUnits = wipApi.getBattleScribeUnits().map { it.mapToModel() }.toImmutableList()
+        }
+        return battleScribeUnits
     }
 
     suspend fun getBattleScribeCategoryList(): List<BattleScribeCategory> {
-        return wipApi.getBattleScribeCategories().map { it.mapToModel() }.toImmutableList()
+        if (battleScribeCategories.isEmpty()) {
+            battleScribeCategories = wipApi.getBattleScribeCategories().map { it.mapToModel() }.toImmutableList()
+        }
+        return battleScribeCategories
     }
 
     suspend fun getModelGroups(): List<ModelGroup> {
+        if (modelGroups.isEmpty()) {
+            modelGroups
+        }
         return wipApi.getModelGroups().map { it.mapToModel() }.toImmutableList()
     }
 
-    suspend fun createModel(form: AddModelFormData): Model {
-        val bsUnit = if (null != form.battleScribeUnit ) {
-          BattleScribeUnitResponse.fromModel(form.battleScribeUnit)
+    suspend fun createModel(form: ModelFormData): Model {
+        return wipApi.createModel(prepareModelRequest(form)).mapToModel()
+    }
+
+    suspend fun updateModel(modelId: Int, formData: ModelFormData): Model {
+        return wipApi.updateModel(modelId, prepareModelRequest(formData)).mapToModel()
+    }
+
+    private fun prepareModelRequest(form: ModelFormData): ModelRequest {
+        val bsUnit = if (null != form.battleScribeUnit) {
+            BattleScribeUnitResponse.fromModel(form.battleScribeUnit)
         } else {
             null
         }
@@ -92,7 +121,7 @@ class ModelRemoteDataSource @Inject constructor(
         } else {
             null
         }
-        val requestBody = ModelRequest(
+        return ModelRequest(
             name = form.name,
             unitCount = form.unitCount,
             terrain = form.terrain,
@@ -101,19 +130,70 @@ class ModelRemoteDataSource @Inject constructor(
             battleScribeUnit = bsUnit,
             killTeam = killTeam
         )
-        return wipApi.createModel(requestBody).mapToModel()
     }
 
-    suspend fun updateModel(modelId: Int, request: ModelRequest): Model {
-        return wipApi.updateModel(modelId, request).mapToModel()
+    suspend fun createModelProgress(modelId: Int, formData: ModelProgressFormData): ModelProgress {
+        if (formData.images.isEmpty()) {
+            val request = ModelProgressRequest(
+                title = formData.title?:"",
+                description = formData.description,
+                status = UserStatusResponse.fromModel(formData.status!!),
+                time = formData.time,
+                dateTime = Instant.now().atOffset(ZoneOffset.of("+3"))
+            )
+            return wipApi.createModelProgress(modelId, request).mapToModel()
+        } else {
+            val imageParts = Array<MultipartBody.Part>(size = formData.images.size, init = { index: Int ->
+                val image = formData.images[index]
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                val requestBody: RequestBody = byteArrayOutputStream.toByteArray()
+                    .toRequestBody(contentType = "image/*".toMediaTypeOrNull())
+                val name = "${modelId}_${Instant.now()}.jpeg"
+                MultipartBody.Part.createFormData("images", name, requestBody)
+            })
+            val body = HashMap<String, RequestBody>()
+            body["title"] = (formData.title?:"").toRequestBody(MultipartBody.FORM)
+            body["description"] = (formData.description?:"").toRequestBody()
+            body["time"] = formData.time.toString().toRequestBody(MultipartBody.FORM)
+            body["datetime"] = Instant.now().atOffset(ZoneOffset.UTC).toString().toRequestBody(MultipartBody.FORM)
+            body["user_status"] = formData.status!!.id.toString().toRequestBody(MultipartBody.FORM)
+            return wipApi.createModelProgress(modelId, body, imageParts).mapToModel()
+        }
     }
 
-    suspend fun createModelProgress(modelId: Int, request: ModelProgressRequest): ModelProgress {
-        return wipApi.createModelProgress(modelId, request).mapToModel()
-    }
-
-    suspend fun updateModelProgress(modelId: Int, progressId: Int, request: ModelProgressRequest): ModelProgress {
-        return wipApi.updateModelProgress(modelId, progressId, request).mapToModel()
+    suspend fun updateModelProgress(
+        modelId: Int,
+        progressId: Int,
+        formData: ModelProgressFormData
+    ): ModelProgress {
+        if (formData.images.isEmpty()) {
+            val request = ModelProgressRequest(
+                title = formData.title?:"",
+                description = formData.description,
+                status = UserStatusResponse.fromModel(formData.status!!),
+                time = formData.time,
+                dateTime = Instant.now().atOffset(ZoneOffset.of("+3"))
+            )
+            return wipApi.updateModelProgress(modelId, progressId, request).mapToModel()
+        } else {
+            val imageParts = Array<MultipartBody.Part>(size = formData.images.size, init = { index: Int ->
+                val image = formData.images[index]
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                val requestBody: RequestBody = byteArrayOutputStream.toByteArray()
+                    .toRequestBody(contentType = "image/*".toMediaTypeOrNull())
+                val name = "${modelId}_${Instant.now()}.jpeg"
+                MultipartBody.Part.createFormData("images", name, requestBody)
+            })
+            val body = HashMap<String, RequestBody>()
+            body["title"] = (formData.title?:"").toRequestBody(MultipartBody.FORM)
+            body["description"] = (formData.description?:"").toRequestBody()
+            body["time"] = formData.time.toString().toRequestBody(MultipartBody.FORM)
+            body["datetime"] = Instant.now().atOffset(ZoneOffset.UTC).toString().toRequestBody(MultipartBody.FORM)
+            body["user_status"] = formData.status!!.id.toString().toRequestBody(MultipartBody.FORM)
+            return wipApi.updateModelProgress(modelId, progressId, body, imageParts).mapToModel()
+        }
     }
 
     suspend fun deleteModelProgress(modelId: Int, progressId: Int) {
@@ -125,11 +205,13 @@ class ModelRemoteDataSource @Inject constructor(
             val image = images[index]
             val byteArrayOutputStream = ByteArrayOutputStream()
             image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
-            val requestBody: RequestBody = byteArrayOutputStream.toByteArray().toRequestBody(contentType = "image/*".toMediaTypeOrNull())
+            val requestBody: RequestBody = byteArrayOutputStream.toByteArray()
+                .toRequestBody(contentType = "image/*".toMediaTypeOrNull())
             val name = "${modelId}_${Instant.now()}.jpeg"
             MultipartBody.Part.createFormData("images", name, requestBody)
         })
-        return wipApi.createModelImage(modelId, imageParts).map { it.mapToModel() }.toImmutableList()
+        return wipApi.createModelImage(modelId, imageParts).map { it.mapToModel() }
+            .toImmutableList()
     }
 
     suspend fun deleteModelImage(modelId: Int, imageId: Int) {

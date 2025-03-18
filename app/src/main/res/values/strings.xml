@@ -16,6 +16,7 @@
     <string name="model_list_screen_title">Мои модели</string>
     <string name="add_model_screen_title">Добавить</string>
     <string name="model_screen_title">Модель</string>
+    <string name="model_progress_screen_title">Лог работ</string>
     <string name="add_progress_screen_title">Покрасил</string>
     <string name="works_screen_title">Лента</string>
     <string name="profile_screen_title">Профиль</string>

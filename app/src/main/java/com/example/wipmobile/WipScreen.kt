@@ -28,6 +28,7 @@ import com.example.wipmobile.ui.AuthenticationScreen
 import com.example.wipmobile.ui.ModelScreen
 import com.example.wipmobile.ui.ModelsScreen
 import com.example.wipmobile.ui.ProfileScreen
+import com.example.wipmobile.ui.ProgressScreen
 import com.example.wipmobile.ui.WorksScreen
 import com.example.wipmobile.ui.add_model.AddModelEvent
 import com.example.wipmobile.ui.add_model.AddModelUiState
@@ -36,7 +37,6 @@ import com.example.wipmobile.ui.auth.AuthenticationEvent
 import com.example.wipmobile.ui.auth.AuthenticationViewModel
 import com.example.wipmobile.ui.components.BottomNavigationBar
 import com.example.wipmobile.ui.model.ModelEvent
-import com.example.wipmobile.ui.model.ModelTopBar
 import com.example.wipmobile.ui.model.ModelUiState
 import com.example.wipmobile.ui.model.ModelViewModel
 import com.example.wipmobile.ui.models.ModelsEvent
@@ -51,6 +51,7 @@ enum class WipScreen(@StringRes val title: Int) {
     Works(R.string.works_screen_title),
     Profile(R.string.profile_screen_title),
     Model(R.string.model_screen_title),
+    Progress(R.string.model_progress_screen_title)
 }
 
 
@@ -150,6 +151,15 @@ fun WipAppScreen(
                     }
                 )
             }
+            composable(route = WipScreen.Progress.name) {
+                ProgressScreen(
+                    uiState = modelUiState,
+                    handleEvent = modelViewModelEventHandler,
+                    navigateBackCallback = {
+                        navController.navigate(WipScreen.Models.name)
+                    }
+                )
+            }
             composable(route = WipScreen.AddProgress.name) {
                 AddProgressScreen()
             }
@@ -174,6 +184,7 @@ fun WipAppScreen(
 }
 
 
+@RequiresApi(Build.VERSION_CODES.P)
 @Preview
 @Composable
 fun WinAppScreenPreview() {

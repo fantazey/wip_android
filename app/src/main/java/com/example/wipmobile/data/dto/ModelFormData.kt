@@ -5,7 +5,7 @@ import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.data.model.ModelGroup
 import com.example.wipmobile.data.model.UserStatus
 
-data class AddModelFormData(
+data class ModelFormData(
     val name: String = "",
     val unitCount: Int = 1,
     val terrain: Boolean = false,

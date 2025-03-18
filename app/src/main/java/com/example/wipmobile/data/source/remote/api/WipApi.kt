@@ -12,6 +12,7 @@ import com.example.wipmobile.data.source.remote.api.response.ModelResponse
 import com.example.wipmobile.data.source.remote.api.response.PagedModelResponse
 import com.example.wipmobile.data.source.remote.api.response.UserStatusResponse
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -19,6 +20,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
+import retrofit2.http.PartMap
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -68,23 +70,44 @@ interface WipApi {
     suspend fun updateModel(@Path("id") modelId: Int, @Body body: ModelRequest): ModelResponse
 
     @POST("wip/api/models/{id}/progress/")
-    suspend fun createModelProgress(@Path("id") modelId: Int, @Body body: ModelProgressRequest): ModelProgressResponse
+    suspend fun createModelProgress(
+        @Path("id") modelId: Int,
+        @Body body: ModelProgressRequest
+    ): ModelProgressResponse
 
+    @Multipart
     @POST("wip/api/models/{id}/progress/")
-    suspend fun createModelProgressWithImage(@Path("id") modelId: Int, @Body body: ModelProgressRequest): ModelProgressResponse
+    suspend fun createModelProgress(
+        @Path("id") modelId: Int,
+        @PartMap body: Map<String, RequestBody>,
+        @Part files: Array<MultipartBody.Part>
+    ): ModelProgressResponse
 
     @PUT("wip/api/models/{id}/progress/{progress}/")
-    suspend fun updateModelProgress(@Path("id") modelId: Int, @Path("progress") progressId: Int, @Body body: ModelProgressRequest): ModelProgressResponse
+    suspend fun updateModelProgress(
+        @Path("id") modelId: Int,
+        @Path("progress") progressId: Int,
+        @Body body: ModelProgressRequest
+    ): ModelProgressResponse
 
+    @Multipart
     @PUT("wip/api/models/{id}/progress/{progress}/")
-    suspend fun updateModelProgressWithImage(@Path("id") modelId: Int, @Path("progress") progressId: Int, @Body body: ModelProgressRequest): ModelProgressResponse
+    suspend fun updateModelProgress(
+        @Path("id") modelId: Int,
+        @Path("progress") progressId: Int,
+        @PartMap body: Map<String, RequestBody>,
+        @Part files: Array<MultipartBody.Part>
+    ): ModelProgressResponse
 
     @DELETE("wip/api/models/{id}/progress/{progress}/")
     suspend fun deleteModelProgress(@Path("id") modelId: Int, @Path("progress") progressId: Int)
 
     @Multipart
     @POST("wip/api/models/{id}/images/")
-    suspend fun createModelImage(@Path("id") modelId: Int, @Part images: Array<MultipartBody.Part>): List<ModelImageResponse>
+    suspend fun createModelImage(
+        @Path("id") modelId: Int,
+        @Part images: Array<MultipartBody.Part>
+    ): List<ModelImageResponse>
 
     @DELETE("wip/api/models/{id}/images/{imageId}/")
     suspend fun deleteModelImage(@Path("id") modelId: Int, @Path("imageId") imageId: Int)

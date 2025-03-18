@@ -45,7 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wipmobile.R
-import com.example.wipmobile.data.dto.AddModelFormData
+import com.example.wipmobile.data.dto.ModelFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
@@ -62,7 +62,7 @@ fun AddModelFormContainer(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val validateFormAndSave = { formData: AddModelFormData ->
+    val validateFormAndSave = { formData: ModelFormData ->
         val errors = mutableListOf<String>()
         if (formData.name.isEmpty()) {
             errors.add("Название не заполнено")
@@ -98,7 +98,7 @@ fun AddModelFormContainer(
             elevation = CardDefaults.cardElevation(4.dp)
         ) {
             ModelForm(
-                init = AddModelFormData(),
+                init = ModelFormData(),
                 userStatuses = uiState.userStatuses,
                 modelGroups = uiState.modelGroups,
                 killTeams = uiState.killTeams,
@@ -112,13 +112,13 @@ fun AddModelFormContainer(
 
 @Composable
 fun ModelForm(
-    init: AddModelFormData,
+    init: ModelFormData,
     userStatuses: List<UserStatus>,
     killTeams: List<KillTeam>,
     modelGroups: List<ModelGroup>,
     battleScribeCategories: List<BattleScribeCategory>,
     battleScribeUnits: List<BattleScribeUnit>,
-    saveCallback: (e: AddModelFormData) -> Unit,
+    saveCallback: (e: ModelFormData) -> Unit,
     modifier: Modifier = Modifier,
 ) {
 
@@ -174,7 +174,11 @@ fun ModelForm(
                     .fillMaxWidth(),
                 value = unitCount.toString(),
                 onValueChange = { newVal ->
-                    unitCount = newVal.toInt()
+                    unitCount = try {
+                        newVal.toInt()
+                    } catch (e: Exception) {
+                        1
+                    }
                 },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -190,12 +194,11 @@ fun ModelForm(
         ) {
             Text("Статус")
             Spacer(modifier = modifier.width(10.dp))
-            StatusDropDown(
-                statuses = userStatuses,
+            CommonDropDown<UserStatus>(
+                items = userStatuses,
                 selected = status,
-                onChange = { newValue ->
-                    status = newValue
-                }
+                onChange = { newValue -> status = newValue },
+                getLabel = { newValue: UserStatus? -> newValue?.name ?: "Выбрать" }
             )
         }
         Row(
@@ -219,12 +222,11 @@ fun ModelForm(
         ) {
             Text("Килл тим")
             Spacer(modifier = modifier.width(10.dp))
-            KillTeamDropDown(
+            CommonDropDown<KillTeam>(
                 items = killTeams,
                 selected = killTeam,
-                onChange = { newValue ->
-                    killTeam = newValue
-                }
+                onChange = { newValue -> killTeam = newValue },
+                getLabel = { newValue: KillTeam? -> newValue?.name ?: "Выбрать" }
             )
         }
         Row(
@@ -234,12 +236,11 @@ fun ModelForm(
         ) {
             Text("Категория BS")
             Spacer(modifier = modifier.width(10.dp))
-            BattleScribeCategoryDropDown(
+            CommonDropDown<BattleScribeCategory>(
                 items = battleScribeCategories,
                 selected = battleScribeCategory,
-                onChange = { newValue ->
-                    battleScribeCategory = newValue
-                }
+                onChange = { newValue -> battleScribeCategory = newValue },
+                getLabel = { newValue: BattleScribeCategory? -> newValue?.name ?: "Выбрать" }
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -250,14 +251,18 @@ fun ModelForm(
         ) {
             Text("Юнит BS")
             Spacer(modifier = modifier.width(10.dp))
-            BattleScribeUnitDropDown(
-                items = battleScribeUnits,
+            CommonDropDown<BattleScribeUnit>(
+                items = if (battleScribeCategory != null) {
+                    battleScribeUnits.filter { it.category != null && it.category.id == battleScribeCategory!!.id }
+                } else {
+                    battleScribeUnits
+                },
                 selected = battleScribeUnit,
-                category = battleScribeCategory,
                 onChange = { newValue ->
                     battleScribeUnit = newValue
-                    name = newValue.name
-                }
+                    name = newValue?.name ?: ""
+                },
+                getLabel = { newValue: BattleScribeUnit? -> newValue?.name ?: "Выбрать" }
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -283,7 +288,7 @@ fun ModelForm(
         Spacer(modifier = Modifier.height(16.dp))
         AddModelSaveButton(onClick = {
             saveCallback(
-                AddModelFormData(
+                ModelFormData(
                     name = name,
                     groups = groups,
                     terrain = terrain,
@@ -308,70 +313,22 @@ fun AddModelTitle() {
 }
 
 @Composable
-fun StatusDropDown(
-    statuses: List<UserStatus>,
-    selected: UserStatus? = null,
-    onChange: (newVal: UserStatus) -> Unit
+fun <T> CommonDropDown(
+    items: List<T>,
+    selected: T? = null,
+    onChange: (newVal: T?) -> Unit,
+    getLabel: (value: T?) -> String
 ) {
-    var statusLabel: String by remember { mutableStateOf("Выбрать статус") }
-    var statusMenuOpen: Boolean by remember { mutableStateOf(false) }
-    var selectedStatus: UserStatus? by remember { mutableStateOf(selected) }
-    val onSelectStatus = { newValue: UserStatus ->
-        statusLabel = newValue.name
-        selectedStatus = newValue
-        onChange(newValue)
-    }
-    Box() {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(3.dp)
-                .clickable { statusMenuOpen = true }
-                .border(width = 1.dp, Color.DarkGray)
-        ) {
-            Text(statusLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Icon(contentDescription = "", imageVector = Icons.Default.ArrowDropDown)
-        }
-        DropdownMenu(
-            expanded = statusMenuOpen,
-            modifier = Modifier.requiredSizeIn(maxHeight = 300.dp),
-            onDismissRequest = { statusMenuOpen = false }
-        ) {
-            statuses.map { status ->
-                DropdownMenuItem(
-                    text = { Text(text = status.name) },
-                    onClick = {
-                        onSelectStatus(status)
-                        statusMenuOpen = false
-                    },
-                    trailingIcon = {
-                        if (null != selectedStatus && selectedStatus == status) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Выбран"
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
-
-
-@Composable
-fun KillTeamDropDown(
-    items: List<KillTeam>,
-    selected: KillTeam? = null,
-    onChange: (newVal: KillTeam) -> Unit
-) {
-    var label: String by remember { mutableStateOf("Выбрать") }
+    var label: String by remember { mutableStateOf(getLabel(selected)) }
     var menuOpen: Boolean by remember { mutableStateOf(false) }
-    var selectedValue: KillTeam? by remember { mutableStateOf(selected) }
-    val onSelect = { newValue: KillTeam ->
-        label = newValue.name
-        selectedValue = newValue
-        onChange(newValue)
+    val onSelect = { newValue: T ->
+        if (selected == newValue || newValue == null) {
+            label = "Выбрать"
+            onChange(null)
+        } else {
+            label = getLabel(newValue)
+            onChange(newValue)
+        }
     }
     Box() {
         Row(
@@ -389,15 +346,15 @@ fun KillTeamDropDown(
             modifier = Modifier.requiredSizeIn(maxHeight = 300.dp),
             onDismissRequest = { menuOpen = false }
         ) {
-            items.map { status ->
+            items.map { item ->
                 DropdownMenuItem(
-                    text = { Text(text = status.name) },
+                    text = { Text(text = getLabel(item)) },
                     onClick = {
-                        onSelect(status)
+                        onSelect(item)
                         menuOpen = false
                     },
                     trailingIcon = {
-                        if (null != selectedValue && selectedValue == status) {
+                        if (null != selected && selected == item) {
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = "Выбран"
@@ -409,116 +366,6 @@ fun KillTeamDropDown(
         }
     }
 }
-
-@Composable
-fun BattleScribeCategoryDropDown(
-    items: List<BattleScribeCategory>,
-    selected: BattleScribeCategory? = null,
-    onChange: (newVal: BattleScribeCategory) -> Unit
-) {
-    var label: String by remember { mutableStateOf("Выбрать") }
-    var menuOpen: Boolean by remember { mutableStateOf(false) }
-    var selectedValue: BattleScribeCategory? by remember { mutableStateOf(selected) }
-    val onSelect = { newValue: BattleScribeCategory ->
-        label = newValue.name
-        selectedValue = newValue
-        onChange(newValue)
-    }
-    Box() {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(3.dp)
-                .clickable { menuOpen = true }
-                .border(width = 1.dp, Color.DarkGray)
-        ) {
-            Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Icon(contentDescription = "", imageVector = Icons.Default.ArrowDropDown)
-        }
-        DropdownMenu(
-            expanded = menuOpen,
-            modifier = Modifier.requiredSizeIn(maxHeight = 300.dp),
-            onDismissRequest = { menuOpen = false }
-        ) {
-            items.map { status ->
-                DropdownMenuItem(
-                    text = { Text(text = status.name) },
-                    onClick = {
-                        onSelect(status)
-                        menuOpen = false
-                    },
-                    trailingIcon = {
-                        if (null != selectedValue && selectedValue == status) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Выбран"
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun BattleScribeUnitDropDown(
-    items: List<BattleScribeUnit>,
-    category: BattleScribeCategory?,
-    selected: BattleScribeUnit? = null,
-    onChange: (newVal: BattleScribeUnit) -> Unit
-) {
-    var label: String by remember { mutableStateOf("Выбрать") }
-    var menuOpen: Boolean by remember { mutableStateOf(false) }
-    var selectedValue: BattleScribeUnit? by remember { mutableStateOf(selected) }
-    val onSelect = { newValue: BattleScribeUnit ->
-        label = newValue.name
-        selectedValue = newValue
-        onChange(newValue)
-    }
-
-    val filteredItems = if (category != null) {
-        items.filter { it.category != null && it.category.id == category.id }
-    } else {
-        items
-    }
-    Box() {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(3.dp)
-                .clickable { menuOpen = true }
-                .border(width = 1.dp, Color.DarkGray)
-        ) {
-            Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Icon(contentDescription = "", imageVector = Icons.Default.ArrowDropDown)
-        }
-        DropdownMenu(
-            expanded = menuOpen,
-            modifier = Modifier.requiredSizeIn(maxHeight = 300.dp),
-            onDismissRequest = { menuOpen = false }
-        ) {
-            filteredItems.map { status ->
-                DropdownMenuItem(
-                    text = { Text(text = status.name) },
-                    onClick = {
-                        onSelect(status)
-                        menuOpen = false
-                    },
-                    trailingIcon = {
-                        if (null != selectedValue && selectedValue == status) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Выбран"
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
-
 
 @Composable
 fun ModelGroupDropDown(

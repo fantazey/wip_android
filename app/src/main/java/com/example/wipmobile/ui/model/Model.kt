@@ -3,16 +3,14 @@ package com.example.wipmobile.ui.model
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
-import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -23,7 +21,6 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -42,11 +39,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Refresh
@@ -55,6 +54,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,16 +64,15 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -81,7 +80,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -91,11 +91,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
-import com.android.volley.BuildConfig
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.example.wipmobile.R
-import com.example.wipmobile.data.dto.AddModelFormData
+import com.example.wipmobile.data.dto.ModelFormData
+import com.example.wipmobile.data.dto.ModelProgressFormData
+import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.data.model.Model
@@ -103,11 +104,13 @@ import com.example.wipmobile.data.model.ModelGroup
 import com.example.wipmobile.data.model.ModelImage
 import com.example.wipmobile.data.model.ModelProgress
 import com.example.wipmobile.data.model.UserStatus
+import com.example.wipmobile.ui.add_model.AddModelSaveButton
+import com.example.wipmobile.ui.add_model.CommonDropDown
 import com.example.wipmobile.ui.add_model.ModelForm
+import com.example.wipmobile.ui.add_model.ModelGroupDropDown
 import com.example.wipmobile.ui.components.ModelHoursSpend
 import com.example.wipmobile.ui.components.ModelImage
 import com.example.wipmobile.ui.components.ModelStatus
-import com.example.wipmobile.ui.models.ModelName
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -116,6 +119,7 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.math.truncate
 
 @RequiresApi(Build.VERSION_CODES.P)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,6 +136,17 @@ fun ModelCard(
     var selectedTab by remember { mutableIntStateOf(0) }
     var editMode by remember { mutableStateOf(false) }
     val tabs = arrayOf("Модель", "Лог работ", "Галерея")
+    val modelSavedToast =
+        Toast.makeText(LocalContext.current, "Модель обновлена", Toast.LENGTH_LONG)
+    val successCallback = {
+        editMode = false
+        modelSavedToast.show()
+    }
+    val onSelectLog = { selectedModelProgress: ModelProgress ->
+        handleEvent(
+            ModelEvent.SelectModelProgress(model, selectedModelProgress)
+        )
+    }
     val saveImages = { imagesToUpload: List<Bitmap>, resetCallback: () -> Unit ->
         handleEvent(
             ModelEvent.UploadImages(
@@ -188,13 +203,29 @@ fun ModelCard(
                 0 -> {
                     if (editMode) {
                         ModelForm(
-                            init = AddModelFormData(),
+                            init = ModelFormData(
+                                name = model.name,
+                                status = model.status,
+                                unitCount = model.unitCount,
+                                terrain = model.isTerrain,
+                                groups = model.groups,
+                                killTeam = model.killTeam,
+                                battleScribeUnit = model.battleScribeUnit,
+                            ),
                             userStatuses = uiState.userStatuses,
                             modelGroups = uiState.modelGroups,
                             killTeams = uiState.killTeams,
                             battleScribeCategories = uiState.battleScribeCategories,
                             battleScribeUnits = uiState.battleScribeUnits,
-                            saveCallback = {}
+                            saveCallback = { formData: ModelFormData ->
+                                handleEvent(
+                                    ModelEvent.UpdateModel(
+                                        model = model,
+                                        data = formData,
+                                        successCallback = successCallback
+                                    )
+                                )
+                            }
                         )
                     } else {
                         ModelMain(model)
@@ -202,7 +233,7 @@ fun ModelCard(
                 }
 
                 1 -> {
-                    ModelWorkLog(progress)
+                    ModelWorkLog(progress, onSelectLog=onSelectLog)
                 }
 
                 2 -> {
@@ -323,7 +354,15 @@ fun ModelMain(model: Model) {
         ) {
             Text("Название")
             Spacer(modifier = Modifier.width(12.dp))
-            ModelName(model.name)
+            Text(model.name)
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Количество юнитов")
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(model.unitCount.toString())
         }
         Spacer(modifier = Modifier.height(10.dp))
         Row(
@@ -402,10 +441,10 @@ fun ModelMain(model: Model) {
 
 
 @Composable
-fun ModelWorkLog(progress: List<ModelProgress>) {
+fun ModelWorkLog(progress: List<ModelProgress>, onSelectLog: (selected: ModelProgress) -> Unit) {
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(progress) { progressLog: ModelProgress ->
-            ModelWorkLogItem(progressLog)
+            ModelWorkLogItem(progressLog, onSelectLog = onSelectLog)
         }
     }
 }
@@ -440,17 +479,17 @@ fun ModelWorkLogPreview() {
         createdAt = "date date",
         imagePath = null
     )
-    ModelWorkLog(listOf(p1, p2, p3))
+    ModelWorkLog(listOf(p1, p2, p3)) {}
 }
 
 @Composable
-fun ModelWorkLogItem(progressLog: ModelProgress) {
+fun ModelWorkLogItem(progressLog: ModelProgress, onSelectLog: (selected: ModelProgress) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(2.dp),
         elevation = CardDefaults.cardElevation(4.dp),
-        onClick = {}
+        onClick = { onSelectLog(progressLog) }
     ) {
         Row(modifier = Modifier.padding(5.dp)) {
             Column(modifier = Modifier.padding(5.dp)) {
@@ -481,7 +520,7 @@ fun ModelWorkLogItemPreview() {
         createdAt = "date date",
         imagePath = null
     )
-    ModelWorkLogItem(p3)
+    ModelWorkLogItem(p3) {}
 }
 
 
@@ -735,4 +774,272 @@ fun ZoomableImage(path: String) {
             }
             .fillMaxSize()
     )
+}
+
+@Composable
+fun ProgressCard(
+    uiState: ModelUiState,
+    handleEvent: (event: ModelEvent) -> Unit,
+    navigateBackCallback: () -> Unit
+) {
+    var editMode by remember { mutableStateOf(false) }
+    Scaffold(
+        topBar = {
+            ProgressTopBar(
+                model = uiState.model!!,
+                progress = uiState.progress[0],
+                toggleEditCallback = { editMode = !editMode },
+                navigateBackCallback = navigateBackCallback,
+                refreshCallback = { handleEvent(ModelEvent.Refresh) },
+                logTimeCallback = {}
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                    top = innerPadding.calculateTopPadding(),
+                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = 0.dp
+                )
+        ) {
+            if (uiState.modelProgress == null) {
+                Text("Форма добавления лога работ")
+            } else {
+                if (editMode == false) {
+                    ProgressMain(progress = uiState.modelProgress)
+                } else {
+                    Text("Форма редактирования лога работ")
+                }
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProgressTopBar(
+    progress: ModelProgress,
+    model: Model,
+    navigateBackCallback: () -> Unit,
+    toggleEditCallback: () -> Unit,
+    logTimeCallback: () -> Unit,
+    refreshCallback: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            Text(
+                text = model.name,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = navigateBackCallback) {
+                Icon(contentDescription = "", imageVector = Icons.Default.ArrowBackIosNew)
+            }
+        },
+        actions = {
+            IconButton(onClick = toggleEditCallback) {
+                Icon(contentDescription = "", imageVector = Icons.Default.Edit)
+            }
+            IconButton(onClick = logTimeCallback) {
+                Icon(contentDescription = "", imageVector = Icons.Default.Timer)
+            }
+            IconButton(onClick = refreshCallback) {
+                Icon(contentDescription = "", imageVector = Icons.Default.Refresh)
+            }
+            IconButton(onClick = refreshCallback) {
+                Icon(contentDescription = "", imageVector = Icons.Default.Delete)
+            }
+        },
+        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
+        modifier = Modifier.border(
+            border = BorderStroke(width = 1.dp, color = Color.Black),
+            shape = RoundedCornerShape(5.dp)
+        )
+    )
+}
+
+
+@Composable
+fun ProgressMain(
+    progress: ModelProgress
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(5.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Заголовок")
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(progress.title)
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Описание работ")
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(progress.description ?: "")
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            val hours = truncate(progress.time)
+            val decimalMinutes = progress.time - hours
+            val minutes = truncate(decimalMinutes * 60)
+            Text("Время затрачено")
+            Spacer(modifier = Modifier.width(12.dp))
+            Text("$hours ч. $minutes м.")
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Статус")
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(progress.status.name)
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text("Запись от")
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(progress.createdAt)
+        }
+    }
+}
+
+
+@Composable
+fun ModelProgressForm(
+    init: ModelProgressFormData,
+    userStatuses: List<UserStatus>,
+    saveCallback: (e: ModelProgressFormData) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var hours = truncate(init.time).toInt()
+    var minutes = truncate((init.time - hours) * 60).toInt()
+
+    var title: String by remember { mutableStateOf(init.title) }
+    var description: String by remember { mutableStateOf(init.description) }
+    var timeHours: Int by remember { mutableIntStateOf(hours) }
+    var timeMinutes: Int by remember { mutableIntStateOf(minutes) }
+    var status: UserStatus? by remember { mutableStateOf(init.status) }
+
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Заголовок")
+            Spacer(modifier = modifier.width(10.dp))
+            BasicTextField(
+                modifier = modifier
+                    .border(width = 1.dp, color = Color.DarkGray)
+                    .fillMaxWidth(),
+                value = title,
+                onValueChange = { newVal -> title = newVal },
+                singleLine = true,
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Описание")
+            Spacer(modifier = modifier.width(10.dp))
+            BasicTextField(
+                modifier = modifier
+                    .border(width = 1.dp, color = Color.DarkGray)
+                    .fillMaxWidth(),
+                value = description,
+                onValueChange = { newVal -> description = newVal },
+                singleLine = false
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Часов")
+            Spacer(modifier = modifier.width(10.dp))
+            BasicTextField(
+                modifier = modifier
+                    .border(width = 1.dp, color = Color.DarkGray)
+                    .fillMaxWidth(),
+                value = hours.toString(),
+                onValueChange = { newVal -> hours = try { newVal.toInt() } catch (e: Exception) {0} },
+                singleLine = false,
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Минут")
+            Spacer(modifier = modifier.width(10.dp))
+            BasicTextField(
+                modifier = modifier
+                    .border(width = 1.dp, color = Color.DarkGray)
+                    .fillMaxWidth(),
+                value = minutes.toString(),
+                onValueChange = { newVal -> minutes = try { newVal.toInt() } catch (e: Exception) {0} },
+                singleLine = false,
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+        ) {
+            Text("Статус")
+            Spacer(modifier = modifier.width(10.dp))
+            CommonDropDown<UserStatus>(
+                items = userStatuses,
+                selected = status,
+                onChange = { newValue -> status = newValue },
+                getLabel = { newValue: UserStatus? -> newValue?.name ?: "Выбрать" }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        AddModelSaveButton(onClick = {
+            saveCallback(
+                ModelProgressFormData(
+                    title = title,
+                    description = description,
+                    time = hours + (minutes / 60f),
+                    status = status,
+                    images = emptyList()
+                )
+            )
+        })
+    }
 }

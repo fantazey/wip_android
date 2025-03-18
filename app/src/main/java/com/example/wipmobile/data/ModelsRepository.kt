@@ -1,7 +1,8 @@
 package com.example.wipmobile.data
 
 import android.graphics.Bitmap
-import com.example.wipmobile.data.dto.AddModelFormData
+import com.example.wipmobile.data.dto.ModelFormData
+import com.example.wipmobile.data.dto.ModelProgressFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
@@ -14,7 +15,6 @@ import com.example.wipmobile.data.model.UserStatus
 
 import com.example.wipmobile.data.source.remote.ModelRemoteDataSource
 import com.example.wipmobile.data.source.remote.api.request.ModelProgressRequest
-import com.example.wipmobile.data.source.remote.api.request.ModelRequest
 import javax.inject.Inject
 
 class ModelsRepository @Inject constructor(
@@ -67,28 +67,35 @@ class ModelsRepository @Inject constructor(
         return remoteDataSource.getModel(id)
     }
 
-    suspend fun createModel(model: AddModelFormData): Model {
+    suspend fun createModel(model: ModelFormData): Model {
         return remoteDataSource.createModel(model)
     }
 
-    suspend fun updateModel(modelId: Int, model: ModelRequest): Model {
-        return remoteDataSource.updateModel(modelId, model)
+    suspend fun updateModel(model: Model, formData: ModelFormData): Model {
+        return remoteDataSource.updateModel(model.id, formData)
     }
 
-    suspend fun createModelProgress(modelId: Int, progress: ModelProgressRequest): ModelProgress {
-        return remoteDataSource.createModelProgress(modelId, progress)
+    suspend fun createModelProgress(model: Model, formData: ModelProgressFormData): ModelProgress {
+        return remoteDataSource.createModelProgress(model.id, formData)
     }
 
     suspend fun updateModelProgress(
-        modelId: Int,
-        progressId: Int,
-        progress: ModelProgressRequest
+        model: Model,
+        progress: ModelProgress,
+        formData: ModelProgressFormData
     ): ModelProgress {
-        return remoteDataSource.updateModelProgress(modelId, progressId, progress)
+        return remoteDataSource.updateModelProgress(model.id, progress.id, formData)
+    }
+
+    suspend fun deleteModelProgress(model: Model, progress: ModelProgress) {
+        remoteDataSource.deleteModelProgress(model.id, progress.id)
     }
 
     suspend fun createModelImage(model: Model, images: List<Bitmap>): List<ModelImage> {
         return remoteDataSource.createModelImage(model.id, images)
     }
 
+    suspend fun deleteModelImage(model: Model, images: List<ModelImage>) {
+        images.forEach { image -> remoteDataSource.deleteModelImage(model.id, image.id) }
+    }
 }
