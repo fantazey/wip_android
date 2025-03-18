@@ -148,6 +148,9 @@ fun WipAppScreen(
                     handleEvent = modelViewModelEventHandler,
                     navigateBackCallback = {
                         navController.navigate(WipScreen.Models.name)
+                    },
+                    navigateToProgressCallback = {
+                        navController.navigate(WipScreen.Progress.name)
                     }
                 )
             }
@@ -155,8 +158,9 @@ fun WipAppScreen(
                 ProgressScreen(
                     uiState = modelUiState,
                     handleEvent = modelViewModelEventHandler,
-                    navigateBackCallback = {
-                        navController.navigate(WipScreen.Models.name)
+                    navigateBackCallback = { model: Model, tab: Int ->
+                        modelViewModelEventHandler(ModelEvent.Select(model, tab))
+                        navController.navigate(WipScreen.Model.name)
                     }
                 )
             }

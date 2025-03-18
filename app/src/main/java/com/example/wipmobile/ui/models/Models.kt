@@ -165,7 +165,7 @@ fun ModelData(model: Model, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(5.dp))
         ModelStatus(model.status.name)
         Spacer(modifier = Modifier.height(5.dp))
-        ModelHoursSpend(model.hoursSpent)
+        ModelHoursSpend(model.hoursSpent.toFloat())
         Spacer(modifier = Modifier.height(5.dp))
         Row {
             model.groups.map {

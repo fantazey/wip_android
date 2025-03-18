@@ -16,7 +16,8 @@ import com.example.wipmobile.ui.model.ModelUiState
 fun ModelScreen(
     uiState: ModelUiState,
     handleEvent: (event: ModelEvent) -> Unit,
-    navigateBackCallback: () -> Unit
+    navigateBackCallback: () -> Unit,
+    navigateToProgressCallback: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.error != null) {
@@ -33,7 +34,8 @@ fun ModelScreen(
             ModelCard(
                 uiState = uiState,
                 handleEvent = handleEvent,
-                navigateBackCallback = navigateBackCallback
+                navigateBackCallback = navigateBackCallback,
+                navigateToProgressCallback = navigateToProgressCallback,
             )
         }
     }

@@ -1,9 +1,11 @@
 package com.example.wipmobile
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.example.wipmobile.ui.add_model.AddModelViewModel
@@ -23,6 +25,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var modelViewModel: ModelViewModel
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         (application as WipApplication).appComponent.inject(this)
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)

@@ -128,12 +128,13 @@ fun ModelCard(
     uiState: ModelUiState,
     handleEvent: (e: ModelEvent) -> Unit,
     navigateBackCallback: () -> Unit,
+    navigateToProgressCallback: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val model: Model = uiState.model!!
     val progress: List<ModelProgress> = uiState.progress
     val images: List<ModelImage> = uiState.images
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(uiState.selectedTab)}
     var editMode by remember { mutableStateOf(false) }
     val tabs = arrayOf("Модель", "Лог работ", "Галерея")
     val modelSavedToast =
@@ -143,9 +144,8 @@ fun ModelCard(
         modelSavedToast.show()
     }
     val onSelectLog = { selectedModelProgress: ModelProgress ->
-        handleEvent(
-            ModelEvent.SelectModelProgress(model, selectedModelProgress)
-        )
+        handleEvent(ModelEvent.SelectModelProgress(model, selectedModelProgress))
+        navigateToProgressCallback()
     }
     val saveImages = { imagesToUpload: List<Bitmap>, resetCallback: () -> Unit ->
         handleEvent(
@@ -233,7 +233,7 @@ fun ModelCard(
                 }
 
                 1 -> {
-                    ModelWorkLog(progress, onSelectLog=onSelectLog)
+                    ModelWorkLog(progress, onSelectLog = onSelectLog)
                 }
 
                 2 -> {
@@ -273,7 +273,8 @@ fun ModelCardPreview() {
     ModelCard(
         uiState = uiState,
         navigateBackCallback = {},
-        handleEvent = {})
+        handleEvent = {},
+        navigateToProgressCallback = {})
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -434,7 +435,7 @@ fun ModelMain(model: Model) {
         ) {
             Text("Времени затрачено")
             Spacer(modifier = Modifier.width(12.dp))
-            ModelHoursSpend(model.hoursSpent)
+            ModelHoursSpend(model.hoursSpent.toFloat())
         }
     }
 }
@@ -456,7 +457,7 @@ fun ModelWorkLogPreview() {
         id = 1,
         title = "test trest ters tresr tsrts er",
         description = "long long long long long long long long long long long long long long long long long long",
-        time = 4.21,
+        time = 4.21f,
         status = UserStatus(id = 1, name = "test status1"),
         createdAt = "date date",
         imagePath = null
@@ -465,7 +466,7 @@ fun ModelWorkLogPreview() {
         id = 1,
         title = "test trest ters tresr tsrts er",
         description = "long long long long long long long long long long long long long long long long long long",
-        time = 4.21,
+        time = 4.21f,
         status = UserStatus(id = 1, name = "test status1"),
         createdAt = "date date",
         imagePath = null
@@ -474,7 +475,7 @@ fun ModelWorkLogPreview() {
         id = 1,
         title = "test trest ters tresr tsrts er",
         description = "long long long long long long long long long long long long long long long long long long",
-        time = 4.21,
+        time = 4.21f,
         status = UserStatus(id = 1, name = "test status1"),
         createdAt = "date date",
         imagePath = null
@@ -515,7 +516,7 @@ fun ModelWorkLogItemPreview() {
         id = 1,
         title = "test trest ters tresr tsrts er",
         description = "long long long long long long long long long long long long long long long long long long",
-        time = 4.21,
+        time = 4.21f,
         status = UserStatus(id = 1, name = "test status1"),
         createdAt = "date date",
         imagePath = null
@@ -780,18 +781,55 @@ fun ZoomableImage(path: String) {
 fun ProgressCard(
     uiState: ModelUiState,
     handleEvent: (event: ModelEvent) -> Unit,
-    navigateBackCallback: () -> Unit
+    navigateBackCallback: () -> Unit,
 ) {
     var editMode by remember { mutableStateOf(false) }
+    var addProgressMode by remember { mutableStateOf(false) }
+    val saveEditProgressCallback = { formData: ModelProgressFormData ->
+        handleEvent(
+            ModelEvent.UpdateModelProgress(
+                model = uiState.model!!,
+                modelProgress = uiState.modelProgress!!,
+                data = formData,
+                successCallback = {
+                    addProgressMode = false
+                    editMode = false
+                    navigateBackCallback()
+                })
+        )
+    }
+    val saveAddProgressCallback = { formData: ModelProgressFormData ->
+        handleEvent(
+            ModelEvent.CreateModelProgress(
+                model = uiState.model!!,
+                data = formData,
+                successCallback = {
+                    addProgressMode = false
+                    editMode = false
+                    navigateBackCallback()
+                })
+        )
+    }
+    val logTimeCallback = {
+        editMode = false
+        addProgressMode = !addProgressMode
+    }
     Scaffold(
         topBar = {
             ProgressTopBar(
                 model = uiState.model!!,
                 progress = uiState.progress[0],
-                toggleEditCallback = { editMode = !editMode },
+                toggleEditCallback = {
+                    editMode = !editMode
+                    addProgressMode = false
+                },
                 navigateBackCallback = navigateBackCallback,
                 refreshCallback = { handleEvent(ModelEvent.Refresh) },
-                logTimeCallback = {}
+                logTimeCallback = logTimeCallback,
+                deleteProgressCallback = {
+                    handleEvent(ModelEvent.DeleteModelProgress(uiState.model, uiState.modelProgress!!, navigateBackCallback))
+                    navigateBackCallback()
+                }
             )
         }
     ) { innerPadding ->
@@ -805,14 +843,41 @@ fun ProgressCard(
                     bottom = 0.dp
                 )
         ) {
-            if (uiState.modelProgress == null) {
-                Text("Форма добавления лога работ")
+            if (addProgressMode) {
+                ModelProgressForm(
+                    init = ModelProgressFormData(),
+                    userStatuses = uiState.userStatuses,
+                    saveCallback = saveAddProgressCallback,
+                    cancelEditCallback = {
+                        addProgressMode = false
+                        navigateBackCallback()
+                    }
+                )
             } else {
-                if (editMode == false) {
-                    ProgressMain(progress = uiState.modelProgress)
+                if (uiState.modelProgress == null) {
+                    Text("Не выбран лог работ")
                 } else {
-                    Text("Форма редактирования лога работ")
+                    if (editMode) {
+                        ModelProgressForm(
+                            init = ModelProgressFormData(
+                                title = uiState.modelProgress.title,
+                                description = uiState.modelProgress.description?:"",
+                                status = uiState.modelProgress.status,
+                                time = uiState.modelProgress.time,
+                                images = emptyList()
+                            ),
+                            userStatuses = uiState.userStatuses,
+                            saveCallback = saveEditProgressCallback,
+                            cancelEditCallback = {
+                                editMode = false
+                                addProgressMode = false
+                            }
+                        )
+                    } else {
+                        ProgressMain(progress = uiState.modelProgress)
+                    }
                 }
+
             }
         }
     }
@@ -827,7 +892,8 @@ fun ProgressTopBar(
     navigateBackCallback: () -> Unit,
     toggleEditCallback: () -> Unit,
     logTimeCallback: () -> Unit,
-    refreshCallback: () -> Unit
+    refreshCallback: () -> Unit,
+    deleteProgressCallback: () -> Unit
 ) {
     TopAppBar(
         title = {
@@ -852,7 +918,7 @@ fun ProgressTopBar(
             IconButton(onClick = refreshCallback) {
                 Icon(contentDescription = "", imageVector = Icons.Default.Refresh)
             }
-            IconButton(onClick = refreshCallback) {
+            IconButton(onClick = deleteProgressCallback) {
                 Icon(contentDescription = "", imageVector = Icons.Default.Delete)
             }
         },
@@ -929,15 +995,13 @@ fun ModelProgressForm(
     init: ModelProgressFormData,
     userStatuses: List<UserStatus>,
     saveCallback: (e: ModelProgressFormData) -> Unit,
+    cancelEditCallback: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var hours = truncate(init.time).toInt()
-    var minutes = truncate((init.time - hours) * 60).toInt()
-
     var title: String by remember { mutableStateOf(init.title) }
     var description: String by remember { mutableStateOf(init.description) }
-    var timeHours: Int by remember { mutableIntStateOf(hours) }
-    var timeMinutes: Int by remember { mutableIntStateOf(minutes) }
+    var timeHours: Int by remember { mutableIntStateOf(truncate(init.time).toInt()) }
+    var timeMinutes: Int by remember { mutableIntStateOf(truncate((init.time - truncate(init.time)) * 60).toInt()) }
     var status: UserStatus? by remember { mutableStateOf(init.status) }
 
     Column(
@@ -985,33 +1049,37 @@ fun ModelProgressForm(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Absolute.Left
         ) {
-            Text("Часов")
+            Text("Затрачено")
             Spacer(modifier = modifier.width(10.dp))
             BasicTextField(
                 modifier = modifier
-                    .border(width = 1.dp, color = Color.DarkGray)
-                    .fillMaxWidth(),
-                value = hours.toString(),
-                onValueChange = { newVal -> hours = try { newVal.toInt() } catch (e: Exception) {0} },
+                    .border(width = 1.dp, color = Color.DarkGray),
+                value = timeHours.toString(),
+                onValueChange = { newVal ->
+                    timeHours = try {
+                        newVal.toInt()
+                    } catch (e: Exception) {
+                        0
+                    }
+                },
                 singleLine = false,
             )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Absolute.Left
-        ) {
-            Text("Минут")
+            Text("ч.")
             Spacer(modifier = modifier.width(10.dp))
             BasicTextField(
                 modifier = modifier
-                    .border(width = 1.dp, color = Color.DarkGray)
-                    .fillMaxWidth(),
-                value = minutes.toString(),
-                onValueChange = { newVal -> minutes = try { newVal.toInt() } catch (e: Exception) {0} },
+                    .border(width = 1.dp, color = Color.DarkGray),
+                value = timeMinutes.toString(),
+                onValueChange = { newVal ->
+                    timeMinutes = try {
+                        newVal.toInt()
+                    } catch (e: Exception) {
+                        0
+                    }
+                },
                 singleLine = false,
             )
+            Text("ч.")
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(
@@ -1028,18 +1096,26 @@ fun ModelProgressForm(
                 getLabel = { newValue: UserStatus? -> newValue?.name ?: "Выбрать" }
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-        AddModelSaveButton(onClick = {
-            saveCallback(
-                ModelProgressFormData(
-                    title = title,
-                    description = description,
-                    time = hours + (minutes / 60f),
-                    status = status,
-                    images = emptyList()
+        Row(horizontalArrangement = Arrangement.Absolute.SpaceAround) {
+            AddModelSaveButton(onClick = {
+                saveCallback(
+                    ModelProgressFormData(
+                        title = title,
+                        description = description,
+                        time = timeHours + (timeMinutes / 60f),
+                        status = status,
+                        images = emptyList()
+                    )
                 )
-            )
-        })
+            })
+            Button(
+                modifier = modifier,
+                enabled = true,
+                onClick = cancelEditCallback
+            ) {
+                Text("Отмена")
+            }
+        }
     }
 }

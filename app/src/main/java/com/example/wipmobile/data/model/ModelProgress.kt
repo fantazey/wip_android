@@ -6,7 +6,7 @@ data class ModelProgress(
     val title: String,
     val description: String?,
     val createdAt: String,
-    val time: Double,
+    val time: Float,
     val imagePath: String?,
     val status: UserStatus,
 )

@@ -19,7 +19,6 @@ import com.example.wipmobile.data.source.remote.api.response.BattleScribeUnitRes
 import com.example.wipmobile.data.source.remote.api.response.KillTeamResponse
 import com.example.wipmobile.data.source.remote.api.response.ModelGroupResponse
 import com.example.wipmobile.data.source.remote.api.response.UserStatusResponse
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -97,9 +96,9 @@ class ModelRemoteDataSource @Inject constructor(
 
     suspend fun getModelGroups(): List<ModelGroup> {
         if (modelGroups.isEmpty()) {
-            modelGroups
+            modelGroups = wipApi.getModelGroups().map { it.mapToModel() }.toImmutableList()
         }
-        return wipApi.getModelGroups().map { it.mapToModel() }.toImmutableList()
+        return modelGroups
     }
 
     suspend fun createModel(form: ModelFormData): Model {
@@ -135,11 +134,11 @@ class ModelRemoteDataSource @Inject constructor(
     suspend fun createModelProgress(modelId: Int, formData: ModelProgressFormData): ModelProgress {
         if (formData.images.isEmpty()) {
             val request = ModelProgressRequest(
-                title = formData.title?:"",
+                title = formData.title,
                 description = formData.description,
                 status = UserStatusResponse.fromModel(formData.status!!),
                 time = formData.time,
-                dateTime = Instant.now().atOffset(ZoneOffset.of("+3"))
+                dateTime = Instant.now().atOffset(ZoneOffset.of("+3")).toString()
             )
             return wipApi.createModelProgress(modelId, request).mapToModel()
         } else {
@@ -153,8 +152,8 @@ class ModelRemoteDataSource @Inject constructor(
                 MultipartBody.Part.createFormData("images", name, requestBody)
             })
             val body = HashMap<String, RequestBody>()
-            body["title"] = (formData.title?:"").toRequestBody(MultipartBody.FORM)
-            body["description"] = (formData.description?:"").toRequestBody()
+            body["title"] = (formData.title).toRequestBody(MultipartBody.FORM)
+            body["description"] = (formData.description).toRequestBody()
             body["time"] = formData.time.toString().toRequestBody(MultipartBody.FORM)
             body["datetime"] = Instant.now().atOffset(ZoneOffset.UTC).toString().toRequestBody(MultipartBody.FORM)
             body["user_status"] = formData.status!!.id.toString().toRequestBody(MultipartBody.FORM)
@@ -169,11 +168,11 @@ class ModelRemoteDataSource @Inject constructor(
     ): ModelProgress {
         if (formData.images.isEmpty()) {
             val request = ModelProgressRequest(
-                title = formData.title?:"",
+                title = formData.title,
                 description = formData.description,
                 status = UserStatusResponse.fromModel(formData.status!!),
                 time = formData.time,
-                dateTime = Instant.now().atOffset(ZoneOffset.of("+3"))
+                dateTime = Instant.now().atOffset(ZoneOffset.of("+3")).toString()
             )
             return wipApi.updateModelProgress(modelId, progressId, request).mapToModel()
         } else {
@@ -187,8 +186,8 @@ class ModelRemoteDataSource @Inject constructor(
                 MultipartBody.Part.createFormData("images", name, requestBody)
             })
             val body = HashMap<String, RequestBody>()
-            body["title"] = (formData.title?:"").toRequestBody(MultipartBody.FORM)
-            body["description"] = (formData.description?:"").toRequestBody()
+            body["title"] = (formData.title).toRequestBody(MultipartBody.FORM)
+            body["description"] = (formData.description).toRequestBody()
             body["time"] = formData.time.toString().toRequestBody(MultipartBody.FORM)
             body["datetime"] = Instant.now().atOffset(ZoneOffset.UTC).toString().toRequestBody(MultipartBody.FORM)
             body["user_status"] = formData.status!!.id.toString().toRequestBody(MultipartBody.FORM)

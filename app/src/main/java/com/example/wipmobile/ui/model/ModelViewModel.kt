@@ -24,9 +24,10 @@ class ModelViewModel @Inject constructor(
     private val modelsRepository: ModelsRepository
 ): ViewModel() {
     val uiState = MutableStateFlow(ModelUiState())
-    private var modelProgress = emptyList<ModelProgress>()
+    private var modelProgressList = emptyList<ModelProgress>()
     private var modelImages = emptyList<ModelImage>()
     private var model: Model? = null
+    private var modelProgress: ModelProgress? = null
 
     private var userStatuses = emptyList<UserStatus>()
     private var modelGroups = emptyList<ModelGroup>()
@@ -37,7 +38,10 @@ class ModelViewModel @Inject constructor(
     fun handleEvent(event: ModelEvent) {
         when (event) {
             is ModelEvent.Select -> {
-                selectModel(event.model)
+                selectModel(event.model, event.tab)
+            }
+            is ModelEvent.SelectTab -> {
+                uiState.value = uiState.value.copy(selectedTab = event.tab)
             }
             is ModelEvent.ClearError -> {
                 clearError()
@@ -55,22 +59,21 @@ class ModelViewModel @Inject constructor(
                 selectModelProgress(event.progress)
             }
             is ModelEvent.CreateModelProgress -> {
-
+                createModelProgress(event.model, event.data, event.successCallback)
             }
             is ModelEvent.UpdateModelProgress -> {
-
+                updateModelProgress(event.model, event.modelProgress, event.data, event.successCallback)
             }
             is ModelEvent.DeleteModelProgress -> {
-
+                deleteModelProgress(event.model, event.progress, event.successCallback)
             }
             is ModelEvent.DeleteImage -> {
-
             }
         }
     }
 
-    private fun selectModel(modelToSelect: Model) {
-        uiState.value = uiState.value.copy(model=modelToSelect, isLoading = false, loaded = false, modelProgress = null)
+    private fun selectModel(modelToSelect: Model, tab: Int) {
+        uiState.value = uiState.value.copy(model=modelToSelect, isLoading = false, loaded = false, modelProgress = null, selectedTab = tab)
         loadData(modelToSelect)
     }
 
@@ -83,7 +86,7 @@ class ModelViewModel @Inject constructor(
             try {
                 model = modelsRepository.loadModel(modelToLoad.id)
                 modelImages = modelsRepository.loadModelImages(modelToLoad)
-                modelProgress = modelsRepository.loadModelProgress(modelToLoad)
+                modelProgressList = modelsRepository.loadModelProgress(modelToLoad)
                 userStatuses = modelsRepository.loadUserStatuses()
                 modelGroups = modelsRepository.loadModelGroups()
                 killTeams = modelsRepository.loadKillTeams()
@@ -95,7 +98,7 @@ class ModelViewModel @Inject constructor(
                     loaded = true,
                     model = model,
                     images = modelImages,
-                    progress = modelProgress,
+                    progress = modelProgressList,
                     userStatuses = userStatuses,
                     modelGroups = modelGroups,
                     killTeams = killTeams,
@@ -170,17 +173,55 @@ class ModelViewModel @Inject constructor(
     }
 
     private fun createModelProgress(model: Model, formData: ModelProgressFormData, callback: () -> Unit) {
-
+        uiState.value = uiState.value.copy(isLoading = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                modelProgress = modelsRepository.createModelProgress(model, formData)
+                uiState.value = uiState.value.copy(isLoading = false, modelProgress = modelProgress)
+                refresh()
+                withContext(Dispatchers.Main) {
+                    callback()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    uiState.value = uiState.value.copy(
+                        error = e.message,
+                        isLoading = false,
+                        loaded = true
+                    )
+                }
+            }
+        }
     }
 
-    private fun updateModelProgress(model: Model, modelProgress: ModelProgress, formData: ModelProgressFormData, callback: () -> Unit) {
-
+    private fun updateModelProgress(model: Model, progressToUpdate: ModelProgress, formData: ModelProgressFormData, callback: () -> Unit) {
+        uiState.value = uiState.value.copy(isLoading = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                modelProgress = modelsRepository.updateModelProgress(model, progressToUpdate, formData)
+                uiState.value = uiState.value.copy(isLoading = false, modelProgress = modelProgress)
+                refresh()
+                withContext(Dispatchers.Main) {
+                    callback()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    uiState.value = uiState.value.copy(
+                        error = e.message,
+                        isLoading = false,
+                        loaded = true
+                    )
+                }
+            }
+        }
     }
 
     private fun deleteModelProgress(model: Model, modelProgress: ModelProgress, callback: () -> Unit) {
+        uiState.value = uiState.value.copy(isLoading = true)
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 modelsRepository.deleteModelProgress(model, modelProgress)
+                uiState.value = uiState.value.copy(isLoading = false, modelProgress = null)
                 refresh()
                 withContext(Dispatchers.Main) {
                     callback()

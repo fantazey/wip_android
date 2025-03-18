@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.ui.components.ErrorDialog
 import com.example.wipmobile.ui.model.ModelEvent
 import com.example.wipmobile.ui.model.ModelUiState
@@ -16,7 +17,7 @@ import com.example.wipmobile.ui.model.ProgressCard
 fun ProgressScreen(
     uiState: ModelUiState,
     handleEvent: (event: ModelEvent) -> Unit,
-    navigateBackCallback: () -> Unit
+    navigateBackCallback: (model: Model, tab: Int) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.error != null) {
@@ -33,7 +34,9 @@ fun ProgressScreen(
             ProgressCard(
                 uiState = uiState,
                 handleEvent = handleEvent,
-                navigateBackCallback = navigateBackCallback
+                navigateBackCallback = {
+                    navigateBackCallback(uiState.model, 1)
+                }
             )
         }
     }

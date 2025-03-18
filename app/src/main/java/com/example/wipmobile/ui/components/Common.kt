@@ -66,7 +66,7 @@ fun ModelStatus(statusName: String?, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ModelHoursSpend(hours: Double, fontSize: TextUnit = 12.sp) {
+fun ModelHoursSpend(hours: Float, fontSize: TextUnit = 12.sp) {
     val _hours = truncate(hours)
     val humanHours = truncate(_hours).toInt().toString()
     val humanMinutes = truncate((hours - _hours) * 60).toInt().toString()

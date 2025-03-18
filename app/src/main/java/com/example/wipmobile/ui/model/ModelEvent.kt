@@ -9,7 +9,8 @@ import com.example.wipmobile.data.model.ModelProgress
 
 
 sealed class ModelEvent {
-    class Select(val model: Model) : ModelEvent()
+    class Select(val model: Model, val tab: Int = 0) : ModelEvent()
+    class SelectTab(val tab: Int) : ModelEvent()
     data object ClearError : ModelEvent()
     data object Refresh : ModelEvent()
 

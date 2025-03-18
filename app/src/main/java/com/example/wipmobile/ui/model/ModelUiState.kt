@@ -12,6 +12,7 @@ import com.example.wipmobile.data.model.UserStatus
 data class ModelUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
+    val selectedTab: Int = 0,
     val model: Model? = null,
     val modelProgress: ModelProgress? = null,
     val loaded: Boolean = false,

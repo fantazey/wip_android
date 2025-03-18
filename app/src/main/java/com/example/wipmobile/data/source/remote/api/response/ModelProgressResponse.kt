@@ -21,7 +21,7 @@ data class ModelProgressResponse(
     val description: String,
     @SerializedName("datetime")
     val createdAt: String,
-    val time: Double,
+    val time: Float,
     @SerializedName("get_last_image_url")
     val imagePath: String?,
     @SerializedName("user_status")

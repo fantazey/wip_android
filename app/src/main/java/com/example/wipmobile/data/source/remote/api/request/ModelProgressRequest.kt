@@ -23,7 +23,7 @@ data class ModelProgressRequest(
     val title: String,
     val description: String?,
     @SerializedName("datetime")
-    val dateTime: OffsetDateTime,
+    val dateTime: String,
     val time: Float,
     @SerializedName("user_status")
     val status: UserStatusResponse
