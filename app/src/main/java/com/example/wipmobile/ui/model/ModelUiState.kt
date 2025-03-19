@@ -13,6 +13,8 @@ data class ModelUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val selectedTab: Int = 0,
+    val openEditProgressForm: Boolean = false,
+    val openAddProgressForm: Boolean = false,
     val model: Model? = null,
     val modelProgress: ModelProgress? = null,
     val loaded: Boolean = false,

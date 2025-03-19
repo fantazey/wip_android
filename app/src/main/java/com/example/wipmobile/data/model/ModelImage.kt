@@ -1,6 +1,5 @@
 package com.example.wipmobile.data.model
 
-import java.time.Instant
 
 data class ModelImage(
     val id: Int,

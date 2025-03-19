@@ -1,10 +1,16 @@
 package com.example.wipmobile.ui
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
@@ -17,12 +23,22 @@ import com.example.wipmobile.ui.models.ModelsEvent
 import com.example.wipmobile.ui.models.ModelsListContainer
 import com.example.wipmobile.ui.theme.WipMobileTheme
 
+fun Context.getActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.getActivity()
+    else -> null
+}
+
 @Composable
 fun ModelsScreen(
     uiState: ModelsUiState,
     handleEvent: (event: ModelsEvent) -> Unit,
     selectModel: (model: Model) -> Unit
 ) {
+    val context = LocalContext.current
+    BackHandler() {
+        context.getActivity()!!.finish()
+    }
     Log.i("model screen", "Рисуем список моделей")
     if (uiState.models.isEmpty() && !uiState.isLoading) {
         Log.i("model screen", "Список пустой, надо загрузить")

@@ -16,6 +16,7 @@ sealed class ModelEvent {
 
     class UploadImages(val model: Model, val images: List<Bitmap>, val resetCallback: () -> Unit) :
         ModelEvent()
+
     class DeleteImage(
         val model: Model,
         val images: List<ModelImage>,
@@ -25,18 +26,26 @@ sealed class ModelEvent {
     class UpdateModel(val model: Model, val data: ModelFormData, val successCallback: () -> Unit) :
         ModelEvent()
 
-    class SelectModelProgress(val model: Model, val progress: ModelProgress) : ModelEvent()
+    class SelectModelProgress(
+        val model: Model,
+        val progress: ModelProgress? = null,
+        val openEditProgressForm: Boolean = false,
+        val openAddProgressForm: Boolean = false
+    ) : ModelEvent()
+
     class CreateModelProgress(
         val model: Model,
         val data: ModelProgressFormData,
         val successCallback: () -> Unit
     ) : ModelEvent()
+
     class UpdateModelProgress(
         val model: Model,
         val modelProgress: ModelProgress,
         val data: ModelProgressFormData,
         val successCallback: () -> Unit
     ) : ModelEvent()
+
     class DeleteModelProgress(
         val model: Model,
         val progress: ModelProgress,

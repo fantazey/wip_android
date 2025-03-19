@@ -22,7 +22,7 @@ import javax.inject.Inject
 
 class ModelViewModel @Inject constructor(
     private val modelsRepository: ModelsRepository
-): ViewModel() {
+) : ViewModel() {
     val uiState = MutableStateFlow(ModelUiState())
     private var modelProgressList = emptyList<ModelProgress>()
     private var modelImages = emptyList<ModelImage>()
@@ -40,40 +40,67 @@ class ModelViewModel @Inject constructor(
             is ModelEvent.Select -> {
                 selectModel(event.model, event.tab)
             }
+
             is ModelEvent.SelectTab -> {
                 uiState.value = uiState.value.copy(selectedTab = event.tab)
             }
+
             is ModelEvent.ClearError -> {
                 clearError()
             }
+
             is ModelEvent.Refresh -> {
                 refresh()
             }
+
             is ModelEvent.UploadImages -> {
                 uploadImages(event.model, event.images, event.resetCallback)
             }
+
             is ModelEvent.UpdateModel -> {
                 updateModel(event.model, event.data, event.successCallback)
             }
+
             is ModelEvent.SelectModelProgress -> {
-                selectModelProgress(event.progress)
+                selectModelProgress(
+                    event.model,
+                    event.progress,
+                    event.openEditProgressForm,
+                    event.openAddProgressForm
+                )
             }
+
             is ModelEvent.CreateModelProgress -> {
                 createModelProgress(event.model, event.data, event.successCallback)
             }
+
             is ModelEvent.UpdateModelProgress -> {
-                updateModelProgress(event.model, event.modelProgress, event.data, event.successCallback)
+                updateModelProgress(
+                    event.model,
+                    event.modelProgress,
+                    event.data,
+                    event.successCallback
+                )
             }
+
             is ModelEvent.DeleteModelProgress -> {
                 deleteModelProgress(event.model, event.progress, event.successCallback)
             }
+
             is ModelEvent.DeleteImage -> {
+                deleteModelImages(event.model, event.images, event.successCallback)
             }
         }
     }
 
     private fun selectModel(modelToSelect: Model, tab: Int) {
-        uiState.value = uiState.value.copy(model=modelToSelect, isLoading = false, loaded = false, modelProgress = null, selectedTab = tab)
+        uiState.value = uiState.value.copy(
+            model = modelToSelect,
+            isLoading = false,
+            loaded = false,
+            modelProgress = null,
+            selectedTab = tab
+        )
         loadData(modelToSelect)
     }
 
@@ -168,11 +195,25 @@ class ModelViewModel @Inject constructor(
         }
     }
 
-    private fun selectModelProgress(modelProgress: ModelProgress) {
-        uiState.value = uiState.value.copy(modelProgress = modelProgress)
+    private fun selectModelProgress(
+        model: Model,
+        modelProgress: ModelProgress?,
+        openEditProgressForm: Boolean,
+        openAddProgressForm: Boolean
+    ) {
+        uiState.value = uiState.value.copy(
+            modelProgress = modelProgress,
+            model = model,
+            openEditProgressForm = openEditProgressForm,
+            openAddProgressForm = openAddProgressForm
+        )
     }
 
-    private fun createModelProgress(model: Model, formData: ModelProgressFormData, callback: () -> Unit) {
+    private fun createModelProgress(
+        model: Model,
+        formData: ModelProgressFormData,
+        callback: () -> Unit
+    ) {
         uiState.value = uiState.value.copy(isLoading = true)
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -194,11 +235,17 @@ class ModelViewModel @Inject constructor(
         }
     }
 
-    private fun updateModelProgress(model: Model, progressToUpdate: ModelProgress, formData: ModelProgressFormData, callback: () -> Unit) {
+    private fun updateModelProgress(
+        model: Model,
+        progressToUpdate: ModelProgress,
+        formData: ModelProgressFormData,
+        callback: () -> Unit
+    ) {
         uiState.value = uiState.value.copy(isLoading = true)
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                modelProgress = modelsRepository.updateModelProgress(model, progressToUpdate, formData)
+                modelProgress =
+                    modelsRepository.updateModelProgress(model, progressToUpdate, formData)
                 uiState.value = uiState.value.copy(isLoading = false, modelProgress = modelProgress)
                 refresh()
                 withContext(Dispatchers.Main) {
@@ -216,7 +263,11 @@ class ModelViewModel @Inject constructor(
         }
     }
 
-    private fun deleteModelProgress(model: Model, modelProgress: ModelProgress, callback: () -> Unit) {
+    private fun deleteModelProgress(
+        model: Model,
+        modelProgress: ModelProgress,
+        callback: () -> Unit
+    ) {
         uiState.value = uiState.value.copy(isLoading = true)
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -225,6 +276,28 @@ class ModelViewModel @Inject constructor(
                 refresh()
                 withContext(Dispatchers.Main) {
                     callback()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    uiState.value = uiState.value.copy(
+                        error = e.message,
+                        isLoading = false,
+                        loaded = true
+                    )
+                }
+            }
+        }
+    }
+
+    private fun deleteModelImages(model: Model, images: List<ModelImage>, successCallback: () -> Unit) {
+        uiState.value = uiState.value.copy(isLoading = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                modelsRepository.deleteModelImage(model, images)
+                uiState.value = uiState.value.copy(isLoading = false, modelProgress = null)
+                refresh()
+                withContext(Dispatchers.Main) {
+                    successCallback()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

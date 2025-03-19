@@ -59,6 +59,7 @@ fun AddModelFormContainer(
     uiState: AddModelUiState,
     handleEvent: (e: AddModelEvent) -> Unit,
     successCallback: (model: Model) -> Unit,
+    cancelEditCallback: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -104,7 +105,8 @@ fun AddModelFormContainer(
                 killTeams = uiState.killTeams,
                 battleScribeCategories = uiState.battleScribeCategories,
                 battleScribeUnits = uiState.battleScribeUnits,
-                saveCallback = validateFormAndSave
+                saveCallback = validateFormAndSave,
+                cancelEditCallback = cancelEditCallback
             )
         }
     }
@@ -119,6 +121,7 @@ fun ModelForm(
     battleScribeCategories: List<BattleScribeCategory>,
     battleScribeUnits: List<BattleScribeUnit>,
     saveCallback: (e: ModelFormData) -> Unit,
+    cancelEditCallback: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
 
@@ -286,19 +289,28 @@ fun ModelForm(
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        AddModelSaveButton(onClick = {
-            saveCallback(
-                ModelFormData(
-                    name = name,
-                    groups = groups,
-                    terrain = terrain,
-                    status = status,
-                    battleScribeUnit = battleScribeUnit,
-                    killTeam = killTeam,
-                    unitCount = unitCount
+        Row(horizontalArrangement = Arrangement.Absolute.SpaceAround) {
+            AddModelSaveButton(onClick = {
+                saveCallback(
+                    ModelFormData(
+                        name = name,
+                        groups = groups,
+                        terrain = terrain,
+                        status = status,
+                        battleScribeUnit = battleScribeUnit,
+                        killTeam = killTeam,
+                        unitCount = unitCount
+                    )
                 )
-            )
-        })
+            })
+            Button(
+                modifier = modifier,
+                enabled = true,
+                onClick = cancelEditCallback
+            ) {
+                Text("Отмена")
+            }
+        }
     }
 }
 
@@ -437,6 +449,7 @@ fun AddModelFormPreview() {
     AddModelFormContainer(
         uiState = uiState,
         handleEvent = {},
-        successCallback = {}
+        successCallback = {},
+        cancelEditCallback = {}
     )
 }

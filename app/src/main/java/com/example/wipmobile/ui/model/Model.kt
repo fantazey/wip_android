@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +31,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -40,7 +40,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Camera
@@ -54,7 +53,6 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,7 +65,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -80,8 +77,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -93,10 +88,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.example.wipmobile.R
 import com.example.wipmobile.data.dto.ModelFormData
 import com.example.wipmobile.data.dto.ModelProgressFormData
-import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
 import com.example.wipmobile.data.model.Model
@@ -107,7 +100,6 @@ import com.example.wipmobile.data.model.UserStatus
 import com.example.wipmobile.ui.add_model.AddModelSaveButton
 import com.example.wipmobile.ui.add_model.CommonDropDown
 import com.example.wipmobile.ui.add_model.ModelForm
-import com.example.wipmobile.ui.add_model.ModelGroupDropDown
 import com.example.wipmobile.ui.components.ModelHoursSpend
 import com.example.wipmobile.ui.components.ModelImage
 import com.example.wipmobile.ui.components.ModelStatus
@@ -134,7 +126,7 @@ fun ModelCard(
     val model: Model = uiState.model!!
     val progress: List<ModelProgress> = uiState.progress
     val images: List<ModelImage> = uiState.images
-    var selectedTab by remember { mutableIntStateOf(uiState.selectedTab)}
+    var selectedTab by remember { mutableIntStateOf(uiState.selectedTab) }
     var editMode by remember { mutableStateOf(false) }
     val tabs = arrayOf("Модель", "Лог работ", "Галерея")
     val modelSavedToast =
@@ -156,14 +148,42 @@ fun ModelCard(
             )
         )
     }
+    val saveModelForm = { formData: ModelFormData ->
+        handleEvent(
+            ModelEvent.UpdateModel(
+                model = model,
+                data = formData,
+                successCallback = successCallback
+            )
+        )
+    }
+    val onEditProgressClick = { selectedModelProgress: ModelProgress ->
+        handleEvent(ModelEvent.SelectModelProgress(model, selectedModelProgress, true))
+        navigateToProgressCallback()
+    }
+
+    val onDeleteModelProgress = { selectedModelProgress: ModelProgress ->
+        handleEvent(ModelEvent.DeleteModelProgress(model, selectedModelProgress, {}))
+    }
+    val logTimeCallback = {
+        handleEvent(ModelEvent.SelectModelProgress(model = model, openAddProgressForm = true))
+        navigateToProgressCallback()
+    }
+    val refreshCallback = {
+        handleEvent(ModelEvent.Refresh)
+    }
+    val onDeleteImage = { image: ModelImage, callback: () -> Unit ->
+        handleEvent(ModelEvent.DeleteImage(model, listOf(image), callback))
+    }
     Scaffold(
         topBar = {
             ModelTopBar(
                 model = model,
-                toggleEditCallback = { editMode = !editMode },
+                selectedTab = selectedTab,
+                toggleEditCallback = { if (selectedTab == 0) editMode = !editMode },
                 navigateBackCallback = navigateBackCallback,
-                refreshCallback = { handleEvent(ModelEvent.Refresh) },
-                logTimeCallback = {}
+                refreshCallback = refreshCallback,
+                logTimeCallback = logTimeCallback
             )
         }
     ) { innerPadding ->
@@ -189,7 +209,10 @@ fun ModelCard(
                 tabs.forEachIndexed { index, tab ->
                     Tab(
                         selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+                        onClick = {
+                            selectedTab = index
+                            editMode = false
+                        },
                         text = {
                             Text(
                                 text = tab,
@@ -217,15 +240,8 @@ fun ModelCard(
                             killTeams = uiState.killTeams,
                             battleScribeCategories = uiState.battleScribeCategories,
                             battleScribeUnits = uiState.battleScribeUnits,
-                            saveCallback = { formData: ModelFormData ->
-                                handleEvent(
-                                    ModelEvent.UpdateModel(
-                                        model = model,
-                                        data = formData,
-                                        successCallback = successCallback
-                                    )
-                                )
-                            }
+                            saveCallback = saveModelForm,
+                            cancelEditCallback = { editMode = false }
                         )
                     } else {
                         ModelMain(model)
@@ -233,11 +249,17 @@ fun ModelCard(
                 }
 
                 1 -> {
-                    ModelWorkLog(progress, onSelectLog = onSelectLog)
+                    ModelWorkLog(
+                        progress,
+                        onSelectLog = onSelectLog,
+                        onEditProgressClick = onEditProgressClick,
+                        onDeleteProgressClick = onDeleteModelProgress
+                    )
                 }
 
+
                 2 -> {
-                    ModelPictures(images, saveImages = saveImages)
+                    ModelPictures(images, saveImages = saveImages, deleteImage = onDeleteImage)
                 }
 
                 else -> {
@@ -281,6 +303,7 @@ fun ModelCardPreview() {
 @Composable
 fun ModelTopBar(
     model: Model,
+    selectedTab: Int,
     navigateBackCallback: () -> Unit,
     toggleEditCallback: () -> Unit,
     logTimeCallback: () -> Unit,
@@ -300,8 +323,10 @@ fun ModelTopBar(
             }
         },
         actions = {
-            IconButton(onClick = toggleEditCallback) {
-                Icon(contentDescription = "", imageVector = Icons.Default.Edit)
+            if (selectedTab == 0) {
+                IconButton(onClick = toggleEditCallback) {
+                    Icon(contentDescription = "", imageVector = Icons.Default.Edit)
+                }
             }
             IconButton(onClick = logTimeCallback) {
                 Icon(contentDescription = "", imageVector = Icons.Default.Timer)
@@ -338,7 +363,8 @@ fun ModelTopBarPreview() {
         navigateBackCallback = {},
         toggleEditCallback = {},
         logTimeCallback = {},
-        refreshCallback = {}
+        refreshCallback = {},
+        selectedTab = 0
     )
 }
 
@@ -442,10 +468,20 @@ fun ModelMain(model: Model) {
 
 
 @Composable
-fun ModelWorkLog(progress: List<ModelProgress>, onSelectLog: (selected: ModelProgress) -> Unit) {
+fun ModelWorkLog(
+    progress: List<ModelProgress>,
+    onSelectLog: (selected: ModelProgress) -> Unit,
+    onEditProgressClick: (selected: ModelProgress) -> Unit,
+    onDeleteProgressClick: (selected: ModelProgress) -> Unit
+) {
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(progress) { progressLog: ModelProgress ->
-            ModelWorkLogItem(progressLog, onSelectLog = onSelectLog)
+            ModelWorkLogItem(
+                progressLog,
+                onSelectLog = onSelectLog,
+                onEditProgressClick = onEditProgressClick,
+                onDeleteProgressClick = onDeleteProgressClick
+            )
         }
     }
 }
@@ -480,11 +516,16 @@ fun ModelWorkLogPreview() {
         createdAt = "date date",
         imagePath = null
     )
-    ModelWorkLog(listOf(p1, p2, p3)) {}
+    ModelWorkLog(listOf(p1, p2, p3), {}, {}, {})
 }
 
 @Composable
-fun ModelWorkLogItem(progressLog: ModelProgress, onSelectLog: (selected: ModelProgress) -> Unit) {
+fun ModelWorkLogItem(
+    progressLog: ModelProgress,
+    onSelectLog: (selected: ModelProgress) -> Unit,
+    onEditProgressClick: (selected: ModelProgress) -> Unit,
+    onDeleteProgressClick: (selected: ModelProgress) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -492,19 +533,35 @@ fun ModelWorkLogItem(progressLog: ModelProgress, onSelectLog: (selected: ModelPr
         elevation = CardDefaults.cardElevation(4.dp),
         onClick = { onSelectLog(progressLog) }
     ) {
-        Row(modifier = Modifier.padding(5.dp)) {
-            Column(modifier = Modifier.padding(5.dp)) {
-                Text(text = progressLog.title, textAlign = TextAlign.Left)
-                Spacer(modifier = Modifier.height(2.dp))
-                ModelHoursSpend(progressLog.time)
-                Spacer(modifier = Modifier.height(2.dp))
-                ModelStatus(progressLog.status.name)
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(text = progressLog.description ?: "", textAlign = TextAlign.Left)
-                Spacer(modifier = Modifier.height(2.dp))
+        Box() {
+            Row(modifier = Modifier.padding(5.dp)) {
+                ModelImage(progressLog.imagePath, true)
+                Column(modifier = Modifier.padding(5.dp)) {
+                    Text(
+                        text = progressLog.title,
+                        textAlign = TextAlign.Left,
+                        modifier = Modifier.sizeIn(maxWidth = 180.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        ModelHoursSpend(progressLog.time)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        ModelStatus(progressLog.status.name)
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(text = progressLog.description ?: "", textAlign = TextAlign.Left)
+                }
             }
-            ModelImage(progressLog.imagePath, false)
+            Row(modifier = Modifier.align(Alignment.TopEnd)) {
+                IconButton(onClick = { onEditProgressClick(progressLog) }) {
+                    Icon(contentDescription = "", imageVector = Icons.Default.Edit)
+                }
+                IconButton(onClick = { onDeleteProgressClick(progressLog) }) {
+                    Icon(contentDescription = "", imageVector = Icons.Default.Delete)
+                }
+            }
         }
+
 
     }
 }
@@ -514,14 +571,14 @@ fun ModelWorkLogItem(progressLog: ModelProgress, onSelectLog: (selected: ModelPr
 fun ModelWorkLogItemPreview() {
     val p3 = ModelProgress(
         id = 1,
-        title = "test trest ters tresr tsrts er",
-        description = "long long long long long long long long long long long long long long long long long long",
+        title = "test trest ters tresr tsrts er asd asd asd as asd asd asd asd asd",
+        description = "long long long long long long long long long long long long long long long long long long 123 123 12 3123 123 123",
         time = 4.21f,
         status = UserStatus(id = 1, name = "test status1"),
         createdAt = "date date",
         imagePath = null
     )
-    ModelWorkLogItem(p3) {}
+    ModelWorkLogItem(p3, {}, {}, {})
 }
 
 
@@ -529,20 +586,26 @@ fun ModelWorkLogItemPreview() {
 @Composable
 fun ModelPictures(
     images: List<ModelImage>,
-    saveImages: (images: List<Bitmap>, resetCallback: () -> Unit) -> Unit
+    saveImages: (images: List<Bitmap>, resetCallback: () -> Unit) -> Unit,
+    deleteImage: (image: ModelImage, callback: () -> Unit) -> Unit
 ) {
     var dialogVisible by remember { mutableStateOf(false) }
-    var selectedImagePath: String? by remember { mutableStateOf(null) }
+    var selectedImage: ModelImage? by remember { mutableStateOf(null) }
+    val deleteImageCallback = {
+        dialogVisible = false
+        selectedImage = null
+    }
     Box() {
         if (dialogVisible) {
             Dialog(
                 properties = DialogProperties(usePlatformDefaultWidth = false),
                 onDismissRequest = { dialogVisible = false },
             ) {
-                if (null != selectedImagePath) {
+                if (null != selectedImage) {
                     ModelImageDialog(
-                        imagePath = selectedImagePath!!,
-                        onClick = { dialogVisible = false })
+                        imagePath = selectedImage!!.imagePath!!,
+                        onCloseClick = { dialogVisible = false },
+                        onDeleteClick = { deleteImage(selectedImage!!, deleteImageCallback) })
                 } else {
                     dialogVisible = false
                 }
@@ -582,7 +645,7 @@ fun ModelPictures(
                         size = 128.dp,
                         modifier = Modifier.clickable {
                             dialogVisible = true
-                            selectedImagePath = image.imagePath!!
+                            selectedImage = image
                         })
                 }
             }
@@ -701,20 +764,25 @@ fun Context.createImageFile(): File {
 }
 
 @Composable
-fun ModelImageDialog(imagePath: String, onClick: () -> Unit) {
-    val onClick2 = {
-        Log.i("model component", "click close")
-        onClick()
-    }
+fun ModelImageDialog(imagePath: String, onCloseClick: () -> Unit, onDeleteClick: () -> Unit) {
     Box(contentAlignment = Alignment.TopEnd) {
         ZoomableImage(imagePath)
         Box(modifier = Modifier.padding(0.dp, 20.dp, 20.dp, 0.dp)) {
-            IconButton(onClick = onClick2) {
-                Icon(
-                    contentDescription = "",
-                    imageVector = Icons.Default.Close,
-                    modifier = Modifier.background(color = Color.White)
-                )
+            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                IconButton(onClick = onCloseClick) {
+                    Icon(
+                        contentDescription = "",
+                        imageVector = Icons.Default.Close,
+                        modifier = Modifier.background(color = Color.White)
+                    )
+                }
+                IconButton(onClick = onDeleteClick) {
+                    Icon(
+                        contentDescription = "",
+                        imageVector = Icons.Default.Delete,
+                        modifier = Modifier.background(color = Color.White)
+                    )
+                }
             }
         }
     }
@@ -723,7 +791,7 @@ fun ModelImageDialog(imagePath: String, onClick: () -> Unit) {
 @Composable
 @Preview
 fun ModelImageDialogPreview() {
-    return ModelImageDialog("asdasd", {})
+    return ModelImageDialog("asdasd", {}, {})
 }
 
 @SuppressLint("RememberReturnType")
@@ -783,8 +851,8 @@ fun ProgressCard(
     handleEvent: (event: ModelEvent) -> Unit,
     navigateBackCallback: () -> Unit,
 ) {
-    var editMode by remember { mutableStateOf(false) }
-    var addProgressMode by remember { mutableStateOf(false) }
+    var editMode by remember { mutableStateOf(uiState.openEditProgressForm) }
+    var addProgressMode by remember { mutableStateOf(uiState.openAddProgressForm) }
     val saveEditProgressCallback = { formData: ModelProgressFormData ->
         handleEvent(
             ModelEvent.UpdateModelProgress(
@@ -827,7 +895,13 @@ fun ProgressCard(
                 refreshCallback = { handleEvent(ModelEvent.Refresh) },
                 logTimeCallback = logTimeCallback,
                 deleteProgressCallback = {
-                    handleEvent(ModelEvent.DeleteModelProgress(uiState.model, uiState.modelProgress!!, navigateBackCallback))
+                    handleEvent(
+                        ModelEvent.DeleteModelProgress(
+                            uiState.model,
+                            uiState.modelProgress!!,
+                            navigateBackCallback
+                        )
+                    )
                     navigateBackCallback()
                 }
             )
@@ -845,7 +919,7 @@ fun ProgressCard(
         ) {
             if (addProgressMode) {
                 ModelProgressForm(
-                    init = ModelProgressFormData(),
+                    init = ModelProgressFormData(status = uiState.model!!.status),
                     userStatuses = uiState.userStatuses,
                     saveCallback = saveAddProgressCallback,
                     cancelEditCallback = {
@@ -861,7 +935,7 @@ fun ProgressCard(
                         ModelProgressForm(
                             init = ModelProgressFormData(
                                 title = uiState.modelProgress.title,
-                                description = uiState.modelProgress.description?:"",
+                                description = uiState.modelProgress.description ?: "",
                                 status = uiState.modelProgress.status,
                                 time = uiState.modelProgress.time,
                                 images = emptyList()
@@ -1003,7 +1077,28 @@ fun ModelProgressForm(
     var timeHours: Int by remember { mutableIntStateOf(truncate(init.time).toInt()) }
     var timeMinutes: Int by remember { mutableIntStateOf(truncate((init.time - truncate(init.time)) * 60).toInt()) }
     var status: UserStatus? by remember { mutableStateOf(init.status) }
-
+    val context = LocalContext.current
+    val validateAndSave = {
+        val errors = mutableListOf<String>()
+        if (title.isEmpty()) {
+            errors.add("Заголовок должен быть указан")
+        }
+        if (status == null) {
+            errors.add("Статус должен быть указан")
+        }
+        if (errors.isEmpty()) {
+            val formData = ModelProgressFormData(
+                title = title,
+                description = description,
+                time = timeHours + (timeMinutes / 60f),
+                status = status,
+                images = emptyList()
+            )
+            saveCallback(formData)
+        } else {
+            Toast.makeText(context, errors.joinToString(","), Toast.LENGTH_LONG).show()
+        }
+    }
     Column(
         modifier = Modifier
             .padding(16.dp)
@@ -1098,17 +1193,7 @@ fun ModelProgressForm(
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.Absolute.SpaceAround) {
-            AddModelSaveButton(onClick = {
-                saveCallback(
-                    ModelProgressFormData(
-                        title = title,
-                        description = description,
-                        time = timeHours + (timeMinutes / 60f),
-                        status = status,
-                        images = emptyList()
-                    )
-                )
-            })
+            AddModelSaveButton(onClick = validateAndSave)
             Button(
                 modifier = modifier,
                 enabled = true,

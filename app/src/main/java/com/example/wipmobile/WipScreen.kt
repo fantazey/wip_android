@@ -177,6 +177,9 @@ fun WipAppScreen(
                     successCallback = { model ->
                         modelViewModelEventHandler(ModelEvent.Select(model))
                         navController.navigate(WipScreen.Model.name)
+                    },
+                    cancelEditCallback = {
+                        navController.navigate(WipScreen.Models.name)
                     }
                 )
             }

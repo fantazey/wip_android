@@ -19,14 +19,14 @@ import com.example.wipmobile.WipScreen
 fun BottomNavigationBar(currentScreen: WipScreen, onClick: (screen: String) -> Unit) {
     val orderedScreens = arrayOf(
         WipScreen.Models,
-        WipScreen.AddProgress,
+//        WipScreen.AddProgress,
         WipScreen.Works,
         WipScreen.AddModel,
         WipScreen.Profile
     )
     val orderedScreenIcons = arrayOf(
         Icons.Default.List,
-        Icons.Default.Timer,
+//        Icons.Default.Timer,
         Icons.Default.Newspaper,
         Icons.Default.Add,
         Icons.Default.Person

@@ -17,6 +17,7 @@ fun AddModelScreen(
     uiState: AddModelUiState,
     handleEvent: (event: AddModelEvent) -> Unit,
     successCallback: (model: Model) -> Unit,
+    cancelEditCallback: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (!uiState.loaded && !uiState.isLoading) {
@@ -33,6 +34,7 @@ fun AddModelScreen(
                 uiState = uiState,
                 handleEvent = handleEvent,
                 successCallback = successCallback,
+                cancelEditCallback = cancelEditCallback,
                 modifier = modifier
             )
         }
@@ -45,6 +47,7 @@ fun AddModelScreenPreview() {
     AddModelScreen(
         uiState = AddModelUiState(),
         handleEvent = {},
-        successCallback = {}
+        successCallback = {},
+        cancelEditCallback = {}
     )
 }
