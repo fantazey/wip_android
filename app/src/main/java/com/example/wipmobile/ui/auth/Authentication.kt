@@ -1,5 +1,6 @@
 package com.example.wipmobile.ui.auth
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,23 +40,36 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wipmobile.R
 
+fun checkAuthData(login: String, password: String): Boolean {
+    return password.isNotBlank() && login.isNotBlank()
+}
+
 
 @Composable
 fun AuthenticationForm(
     modifier: Modifier,
-    login: String?,
-    password: String?,
-    enableAuthentication: Boolean,
-    onLoginChanged: (newLogin: String) -> Unit,
-    onPasswordChanged: (newValue: String) -> Unit,
-    onAuthenticate: () -> Unit
+    onAuthenticate: (login: String, password: String) -> Unit,
+    onRegister: (login: String, password: String) -> Unit
 ) {
+    var login by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var enableAuthentication by remember { mutableStateOf(false) }
+    var showRegisterForm by remember { mutableStateOf(false) }
+    val checkAuthData = { loginValue: String, passwordValue: String ->
+        if (loginValue.isNotBlank() && passwordValue.isNotBlank()) {
+            enableAuthentication = true
+        }
+    }
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-        AuthenticationTitle()
+        if (showRegisterForm) {
+            RegisterTitle()
+        } else {
+            AuthenticationTitle()
+        }
         Spacer(modifier = Modifier.height(40.dp))
         val passwordFocusRequester = FocusRequester()
         Card(
@@ -69,8 +84,11 @@ fun AuthenticationForm(
             ) {
                 LoginInput(
                     modifier = Modifier.fillMaxWidth(),
-                    login = login ?: "",
-                    onLoginChanged = onLoginChanged
+                    login = login,
+                    onLoginChanged = { newVal ->
+                        login = newVal
+                        checkAuthData(login, password)
+                    }
                 ) {
                     passwordFocusRequester.requestFocus()
                 }
@@ -79,19 +97,38 @@ fun AuthenticationForm(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester = passwordFocusRequester),
-                    password = password ?: "",
-                    onPasswordChanged = onPasswordChanged,
+                    password = password,
+                    onPasswordChanged = { newValue: String ->
+                        password = newValue
+                        checkAuthData(login, password)
+                    },
                     onDoneClicked = {
-                        onAuthenticate()
+                        onAuthenticate(login, password)
                     }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 AuthenticationButton(
-                    enableAuthentication = enableAuthentication,
-                    onAuthenticate = {
-                        onAuthenticate()
+                    enabled = if (showRegisterForm) true else enableAuthentication,
+                    onClick = {
+                        if (showRegisterForm) {
+                            onRegister(login, password)
+                        } else {
+                            onAuthenticate(login, password)
+                        }
+                    },
+                    title = if (showRegisterForm) {
+                        R.string.register_button_label
+                    } else {
+                        R.string.login_in_button_label
                     }
                 )
+                TextButton(onClick = {showRegisterForm = !showRegisterForm}) {
+                    if (showRegisterForm) {
+                        Text("Вход")
+                    } else {
+                        Text("Регистрация")
+                    }
+                }
             }
         }
     }
@@ -99,8 +136,18 @@ fun AuthenticationForm(
 
 @Composable
 fun AuthenticationTitle() {
+    AuthenticationScreenTitle(R.string.title_activity_login)
+}
+
+@Composable
+fun RegisterTitle() {
+    AuthenticationScreenTitle(R.string.title_activity_register)
+}
+
+@Composable
+fun AuthenticationScreenTitle(@StringRes id: Int) {
     Text(
-        text = stringResource(R.string.title_activity_login),
+        text = stringResource(id),
         fontSize = 24.sp,
         fontWeight = FontWeight.Black,
     )
@@ -205,16 +252,17 @@ fun PasswordInput(
 @Composable
 fun AuthenticationButton(
     modifier: Modifier = Modifier,
-    enableAuthentication: Boolean,
-    onAuthenticate: () -> Unit
+    @StringRes title: Int,
+    enabled: Boolean,
+    onClick: () -> Unit
 ) {
     Button(
         modifier = modifier,
-        enabled = enableAuthentication,
+        enabled = enabled,
         onClick = {
-            onAuthenticate()
+            onClick()
         }
     ) {
-        Text(text = stringResource(R.string.login_in_button_label))
+        Text(text = stringResource(title))
     }
 }

@@ -1,5 +1,6 @@
 package com.example.wipmobile.data
 
+import com.example.wipmobile.data.dto.SignUpForm
 import com.example.wipmobile.data.model.AccessToken
 import com.example.wipmobile.data.source.local.AccessTokenWrapper
 import com.example.wipmobile.data.source.remote.UserRemoteDataSource
@@ -13,6 +14,20 @@ class UserRepository @Inject constructor(
 ) {
     suspend fun login(username: String, password: String): AccessToken {
         return remoteDataSource.login(username, password).also {
+            accessTokenWrapper.setAccessToken(it)
+        }
+    }
+
+    suspend fun logout() {
+        val accessToken = accessTokenWrapper.getAccessToken()
+        accessTokenWrapper.clearAccessToken()
+        if (null != accessToken && accessToken.token.isNotEmpty()) {
+            remoteDataSource.logout(accessToken.token)
+        }
+    }
+
+    suspend fun signUp(form: SignUpForm): AccessToken {
+        return remoteDataSource.signUp(form).also {
             accessTokenWrapper.setAccessToken(it)
         }
     }

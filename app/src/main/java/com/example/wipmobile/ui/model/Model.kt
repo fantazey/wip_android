@@ -6,10 +6,10 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -113,7 +113,6 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.truncate
 
-@RequiresApi(Build.VERSION_CODES.P)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModelCard(
@@ -271,14 +270,13 @@ fun ModelCard(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 @Preview
 fun ModelCardPreview() {
     val model = Model(
         id = 1,
         name = "Long long long long long long long text",
-        status = UserStatus(id = 1, name = "test status1"),
+        status = UserStatus(id = 1, name = "test status1", order = 0),
         lastImagePath = null,
         isTerrain = false,
         hoursSpent = 10.2,
@@ -349,7 +347,7 @@ fun ModelTopBarPreview() {
     val model = Model(
         id = 1,
         name = "Long long long long long long long text",
-        status = UserStatus(id = 1, name = "test status1"),
+        status = UserStatus(id = 1, name = "test status1", order = 0),
         lastImagePath = null,
         isTerrain = false,
         hoursSpent = 10.2,
@@ -494,7 +492,7 @@ fun ModelWorkLogPreview() {
         title = "test trest ters tresr tsrts er",
         description = "long long long long long long long long long long long long long long long long long long",
         time = 4.21f,
-        status = UserStatus(id = 1, name = "test status1"),
+        status = UserStatus(id = 1, name = "test status1", order = 0),
         createdAt = "date date",
         imagePath = null
     )
@@ -503,7 +501,7 @@ fun ModelWorkLogPreview() {
         title = "test trest ters tresr tsrts er",
         description = "long long long long long long long long long long long long long long long long long long",
         time = 4.21f,
-        status = UserStatus(id = 1, name = "test status1"),
+        status = UserStatus(id = 1, name = "test status1", order = 0),
         createdAt = "date date",
         imagePath = null
     )
@@ -512,7 +510,7 @@ fun ModelWorkLogPreview() {
         title = "test trest ters tresr tsrts er",
         description = "long long long long long long long long long long long long long long long long long long",
         time = 4.21f,
-        status = UserStatus(id = 1, name = "test status1"),
+        status = UserStatus(id = 1, name = "test status1", order = 0),
         createdAt = "date date",
         imagePath = null
     )
@@ -533,14 +531,14 @@ fun ModelWorkLogItem(
         elevation = CardDefaults.cardElevation(4.dp),
         onClick = { onSelectLog(progressLog) }
     ) {
-        Box() {
+        Box(modifier = Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.padding(5.dp)) {
                 ModelImage(progressLog.imagePath, true)
                 Column(modifier = Modifier.padding(5.dp)) {
                     Text(
                         text = progressLog.title,
                         textAlign = TextAlign.Left,
-                        modifier = Modifier.sizeIn(maxWidth = 180.dp)
+                        modifier = Modifier.sizeIn(maxWidth = 160.dp)
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -574,7 +572,7 @@ fun ModelWorkLogItemPreview() {
         title = "test trest ters tresr tsrts er asd asd asd as asd asd asd asd asd",
         description = "long long long long long long long long long long long long long long long long long long 123 123 12 3123 123 123",
         time = 4.21f,
-        status = UserStatus(id = 1, name = "test status1"),
+        status = UserStatus(id = 1, name = "test status1", order = 0),
         createdAt = "date date",
         imagePath = null
     )
@@ -582,7 +580,6 @@ fun ModelWorkLogItemPreview() {
 }
 
 
-@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun ModelPictures(
     images: List<ModelImage>,
@@ -658,7 +655,6 @@ enum class ImagePickerType {
     Camera, Gallery
 }
 
-@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun ImagePicker(
     type: ImagePickerType,
@@ -666,6 +662,15 @@ fun ImagePicker(
 ) {
     val context = LocalContext.current
     var currentPhotoUri by remember { mutableStateOf(value = Uri.EMPTY) }
+    var bitmap: Bitmap? by remember { mutableStateOf(null) }
+    val readUri = { uri: Uri ->
+        if(Build.VERSION.SDK_INT < 28) {
+            bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri);
+        } else {
+            val imageResource = ImageDecoder.createSource(context.contentResolver, uri)
+            bitmap = ImageDecoder.decodeBitmap(imageResource)
+        }
+    }
     val file = context.createImageFile()
     val uri = FileProvider.getUriForFile(
         Objects.requireNonNull(context),
@@ -677,6 +682,7 @@ fun ImagePicker(
         onResult = { success ->
             if (success) {
                 currentPhotoUri = uri
+                readUri(currentPhotoUri)
             }
         }
     )
@@ -686,17 +692,17 @@ fun ImagePicker(
         onResult = { galleryUri: Uri? ->
             if (null != galleryUri && galleryUri.toString().isNotEmpty()) {
                 currentPhotoUri = galleryUri
+                readUri(currentPhotoUri)
             }
         }
     )
     val resetCallback = {
         currentPhotoUri = Uri.EMPTY
+        bitmap = null
     }
     val onClickHandler = {
-        if (currentPhotoUri.toString().isNotEmpty()) {
-            val imageResource = ImageDecoder.createSource(context.contentResolver, currentPhotoUri)
-            val imageBitmap = ImageDecoder.decodeBitmap(imageResource)
-            saveImages(listOf(imageBitmap), resetCallback)
+        if (currentPhotoUri.toString().isNotEmpty() && bitmap != null) {
+            saveImages(listOf(bitmap!!), resetCallback)
         } else {
             if (type == ImagePickerType.Camera) {
                 cameraLauncher.launch(uri)
@@ -711,14 +717,9 @@ fun ImagePicker(
             .fillMaxSize()
             .background(color = Color.LightGray)
     ) {
-        if (currentPhotoUri.toString().isNotEmpty()) {
+        if (currentPhotoUri.toString().isNotEmpty() && bitmap != null) {
             Image(
-                bitmap = ImageDecoder.decodeBitmap(
-                    ImageDecoder.createSource(
-                        context.contentResolver,
-                        currentPhotoUri
-                    )
-                ).asImageBitmap(),
+                bitmap = bitmap!!.asImageBitmap(),
                 contentDescription = "",
                 modifier = Modifier.size(128.dp)
             )
@@ -886,7 +887,6 @@ fun ProgressCard(
         topBar = {
             ProgressTopBar(
                 model = uiState.model!!,
-                progress = uiState.progress[0],
                 toggleEditCallback = {
                     editMode = !editMode
                     addProgressMode = false
@@ -961,7 +961,6 @@ fun ProgressCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgressTopBar(
-    progress: ModelProgress,
     model: Model,
     navigateBackCallback: () -> Unit,
     toggleEditCallback: () -> Unit,

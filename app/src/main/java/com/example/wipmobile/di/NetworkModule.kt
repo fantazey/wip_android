@@ -23,8 +23,8 @@ class NetworkModule {
 
     @Singleton
     @Provides
-    fun provideAuthApi(gson: Gson): AuthApi {
-        return NetworkClientGenerator.generate(RemoteHost.HOST, AuthApi::class.java, gson, emptyArray())
+    fun provideAuthApi(gson: Gson, logInterceptor: HttpLoggingInterceptor): AuthApi {
+        return NetworkClientGenerator.generate(RemoteHost.HOST, AuthApi::class.java, gson, arrayOf(logInterceptor))
     }
 
     @Singleton

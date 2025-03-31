@@ -1,17 +1,16 @@
 package com.example.wipmobile
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.RequiresApi
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.example.wipmobile.ui.add_model.AddModelViewModel
 import com.example.wipmobile.ui.auth.AuthenticationViewModel
 import com.example.wipmobile.ui.model.ModelViewModel
 import com.example.wipmobile.ui.models.ModelsViewModel
+import com.example.wipmobile.ui.profile.ProfileViewModel
 import com.example.wipmobile.ui.theme.WipMobileTheme
 import javax.inject.Inject
 
@@ -24,8 +23,9 @@ class MainActivity : ComponentActivity() {
     lateinit var addModelViewModel: AddModelViewModel
     @Inject
     lateinit var modelViewModel: ModelViewModel
+    @Inject
+    lateinit var profileViewModel: ProfileViewModel
 
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         (application as WipApplication).appComponent.inject(this)
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
@@ -37,7 +37,8 @@ class MainActivity : ComponentActivity() {
                     authenticationViewModel=authenticationViewModel,
                     modelsViewModel = modelsViewModel,
                     addModelViewModel = addModelViewModel,
-                    modelViewModel = modelViewModel
+                    modelViewModel = modelViewModel,
+                    profileViewModel = profileViewModel,
                 )
             }
         }

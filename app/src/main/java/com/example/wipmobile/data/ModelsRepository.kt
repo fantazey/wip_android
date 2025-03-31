@@ -2,7 +2,9 @@ package com.example.wipmobile.data
 
 import android.graphics.Bitmap
 import com.example.wipmobile.data.dto.ModelFormData
+import com.example.wipmobile.data.dto.ModelGroupFormData
 import com.example.wipmobile.data.dto.ModelProgressFormData
+import com.example.wipmobile.data.dto.StatusFormData
 import com.example.wipmobile.data.model.BattleScribeCategory
 import com.example.wipmobile.data.model.BattleScribeUnit
 import com.example.wipmobile.data.model.KillTeam
@@ -14,7 +16,6 @@ import com.example.wipmobile.data.model.ModelsPage
 import com.example.wipmobile.data.model.UserStatus
 
 import com.example.wipmobile.data.source.remote.ModelRemoteDataSource
-import com.example.wipmobile.data.source.remote.api.request.ModelProgressRequest
 import javax.inject.Inject
 
 class ModelsRepository @Inject constructor(
@@ -91,11 +92,35 @@ class ModelsRepository @Inject constructor(
         remoteDataSource.deleteModelProgress(model.id, progress.id)
     }
 
-    suspend fun createModelImage(model: Model, images: List<Bitmap>): List<ModelImage> {
-        return remoteDataSource.createModelImage(model.id, images)
+    suspend fun createModelImage(model: Model, progress: ModelProgress?, images: List<Bitmap>): List<ModelImage> {
+        return remoteDataSource.createModelImage(model.id, progress?.id, images)
     }
 
     suspend fun deleteModelImage(model: Model, images: List<ModelImage>) {
         images.forEach { image -> remoteDataSource.deleteModelImage(model.id, image.id) }
+    }
+
+    suspend fun createModelGroup(form: ModelGroupFormData): ModelGroup {
+        return remoteDataSource.createModelGroup(form)
+    }
+
+    suspend fun updateModelGroup(group: ModelGroup, form: ModelGroupFormData): ModelGroup {
+        return remoteDataSource.updateModelGroup(group, form)
+    }
+
+    suspend fun deleteModelGroup(group: ModelGroup) {
+        remoteDataSource.deleteModelGroup(group)
+    }
+
+    suspend fun createStatus(form: StatusFormData): UserStatus {
+        return remoteDataSource.createStatus(form)
+    }
+
+    suspend fun updateStatus(status: UserStatus, form: StatusFormData): UserStatus {
+        return remoteDataSource.updateStatus(status, form)
+    }
+
+    suspend fun deleteStatus(status: UserStatus) {
+        remoteDataSource.deleteStatus(status)
     }
 }

@@ -12,19 +12,4 @@ class BattleScribeUnitResponse(
     fun mapToModel(): BattleScribeUnit {
         return BattleScribeUnit(id, name, category = category?.mapToModel())
     }
-
-    companion object {
-        fun fromModel(bsUnit: BattleScribeUnit): BattleScribeUnitResponse {
-            val category = if (null != bsUnit.category) {
-                BattleScribeCategoryResponse.fromModel(bsUnit.category)
-            } else {
-                null
-            }
-            return BattleScribeUnitResponse(
-                id=bsUnit.id,
-                name = bsUnit.name,
-                category = category
-            )
-        }
-    }
 }

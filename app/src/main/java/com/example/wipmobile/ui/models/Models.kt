@@ -139,7 +139,7 @@ fun ModelCardPreview() {
     val model = Model(
         id = 1,
         name = "Chaos Space Marines: Fabius Bile",
-        status = UserStatus(id=1, name = "test status1"),
+        status = UserStatus(id=1, name = "test status1", order = 0),
         lastImagePath = null,
         hoursSpent = 90.52,
         battleScribeUnit = BattleScribeUnit(id=1, name="text"),
@@ -231,7 +231,7 @@ fun ModelDataPreview() {
     val model = Model(
         id = 1,
         name = "Chaos Space Marines: Fabius Bile",
-        status = UserStatus(id=1, name = "test status1"),
+        status = UserStatus(id=1, name = "test status1", order = 0),
         lastImagePath = null,
         hoursSpent = 90.1,
         battleScribeUnit = BattleScribeUnit(id=1, name="text"),

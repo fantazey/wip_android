@@ -9,13 +9,4 @@ class BattleScribeCategoryResponse(
     fun mapToModel(): BattleScribeCategory {
         return BattleScribeCategory(id, name)
     }
-
-    companion object {
-        fun fromModel(category: BattleScribeCategory): BattleScribeCategoryResponse {
-            return BattleScribeCategoryResponse(
-                id = category.id,
-                name = category.name
-            )
-        }
-    }
 }

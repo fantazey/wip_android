@@ -63,6 +63,7 @@ com-github-bumptech-glide = { group = "com.github.bumptech.glide", name="glide",
 com-github-bumptech-glide-compiler = { group = "com.github.bumptech.glide", name="compiler", version.ref="glide" }
 com-github-bumptech-glide-annotations = { group = "com.github.bumptech.glide", name="annotations", version.ref="glide" }
 com-github-bumptech-glide-compose = { group = "com.github.bumptech.glide", name="compose", version.ref="glideCompose" }
+com-android-tools-desuagar-jdk-libs = {group = "com.android.tools", name = "desugar_jdk_libs", version = "2.1.5"}
 
 
 

@@ -9,10 +9,4 @@ class KillTeamResponse(
     fun mapToModel(): KillTeam {
         return KillTeam(id, name)
     }
-
-    companion object {
-        fun fromModel(killTeam: KillTeam): KillTeamResponse {
-            return KillTeamResponse(id=killTeam.id, name = killTeam.name)
-        }
-    }
 }

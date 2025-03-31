@@ -1,12 +1,9 @@
 package com.example.wipmobile
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,7 +18,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.wipmobile.data.model.Model
 import com.example.wipmobile.ui.AddModelScreen
-import com.example.wipmobile.ui.AddProgressScreen
 import com.example.wipmobile.ui.auth.AuthenticationUiState
 import com.example.wipmobile.ui.models.ModelsUiState
 import com.example.wipmobile.ui.AuthenticationScreen
@@ -41,13 +37,15 @@ import com.example.wipmobile.ui.model.ModelUiState
 import com.example.wipmobile.ui.model.ModelViewModel
 import com.example.wipmobile.ui.models.ModelsEvent
 import com.example.wipmobile.ui.models.ModelsViewModel
+import com.example.wipmobile.ui.profile.ProfileEvent
+import com.example.wipmobile.ui.profile.ProfileUiState
+import com.example.wipmobile.ui.profile.ProfileViewModel
 
 
 enum class WipScreen(@StringRes val title: Int) {
     Authentication(R.string.login_screen_title),
     Models(R.string.model_list_screen_title),
     AddModel(R.string.add_model_screen_title),
-    AddProgress(R.string.add_progress_screen_title),
     Works(R.string.works_screen_title),
     Profile(R.string.profile_screen_title),
     Model(R.string.model_screen_title),
@@ -55,13 +53,13 @@ enum class WipScreen(@StringRes val title: Int) {
 }
 
 
-@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun WipApp(
     authenticationViewModel: AuthenticationViewModel = viewModel(),
     modelsViewModel: ModelsViewModel = viewModel(),
     addModelViewModel: AddModelViewModel = viewModel(),
     modelViewModel: ModelViewModel = viewModel(),
+    profileViewModel: ProfileViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -81,32 +79,39 @@ fun WipApp(
 
     val modelUiState by modelViewModel.uiState.collectAsState()
     val modelViewModelEventHandler: (e: ModelEvent) -> Unit = { modelViewModel.handleEvent(it) }
+
+    val profileUiState by profileViewModel.uiState.collectAsState()
+    val profileViewModelEventHandler: (e: ProfileEvent) -> Unit =
+        { profileViewModel.handleEvent(it) }
     WipAppScreen(
         authUiState = authUiState,
         modelsUiState = modelsUiState,
         addModelUiState = addModelUiState,
         modelUiState = modelUiState,
+        profileUiState = profileUiState,
         authViewModelEventHandler = authViewModelEventHandler,
         modelsViewModelEventHandler = modelsViewModelEventHandler,
         modelViewModelEventHandler = modelViewModelEventHandler,
         addModelEventHandler = addModelEventHandler,
+        profileViewModelEventHandler = profileViewModelEventHandler,
         currentScreen = currentScreen,
         navController = navController
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.P)
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun WipAppScreen(
     authUiState: AuthenticationUiState,
     modelsUiState: ModelsUiState,
     modelUiState: ModelUiState,
     addModelUiState: AddModelUiState,
+    profileUiState: ProfileUiState,
     authViewModelEventHandler: (e: AuthenticationEvent) -> Unit,
     modelsViewModelEventHandler: (e: ModelsEvent) -> Unit,
     modelViewModelEventHandler: (e: ModelEvent) -> Unit,
     addModelEventHandler: (e: AddModelEvent) -> Unit,
+    profileViewModelEventHandler: (e: ProfileEvent) -> Unit,
     currentScreen: WipScreen,
     navController: NavHostController,
 ) {
@@ -164,9 +169,6 @@ fun WipAppScreen(
                     }
                 )
             }
-            composable(route = WipScreen.AddProgress.name) {
-                AddProgressScreen()
-            }
             composable(route = WipScreen.Works.name) {
                 WorksScreen()
             }
@@ -184,14 +186,22 @@ fun WipAppScreen(
                 )
             }
             composable(route = WipScreen.Profile.name) {
-                ProfileScreen()
+                ProfileScreen(
+                    uiState = profileUiState,
+                    handleEvent = profileViewModelEventHandler,
+                    logout = {
+                        authViewModelEventHandler(AuthenticationEvent.Logout(navigationCallback = {
+                            modelsViewModelEventHandler(ModelsEvent.ResetLoaded)
+                            navController.navigate(WipScreen.Authentication.name)
+                        }))
+                    },
+                )
             }
         }
     }
 }
 
 
-@RequiresApi(Build.VERSION_CODES.P)
 @Preview
 @Composable
 fun WinAppScreenPreview() {
@@ -206,10 +216,12 @@ fun WinAppScreenPreview() {
         modelsUiState = modelsUiState,
         addModelUiState = AddModelUiState(),
         modelUiState = ModelUiState(),
+        profileUiState = ProfileUiState(),
         authViewModelEventHandler = {},
         modelsViewModelEventHandler = {},
         addModelEventHandler = {},
         modelViewModelEventHandler = {},
+        profileViewModelEventHandler = {},
         currentScreen = WipScreen.Profile,
         navController = navController
     )

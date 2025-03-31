@@ -54,7 +54,7 @@ class ModelViewModel @Inject constructor(
             }
 
             is ModelEvent.UploadImages -> {
-                uploadImages(event.model, event.images, event.resetCallback)
+                uploadImages(event.model, null, event.images, event.resetCallback)
             }
 
             is ModelEvent.UpdateModel -> {
@@ -153,11 +153,11 @@ class ModelViewModel @Inject constructor(
         loadData(uiState.value.model!!)
     }
 
-    private fun uploadImages(model: Model, images: List<Bitmap>, callback: () -> Unit) {
+    private fun uploadImages(model: Model, modelProgress: ModelProgress?, images: List<Bitmap>, callback: () -> Unit) {
         uiState.value = uiState.value.copy(isLoading = true)
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                modelsRepository.createModelImage(model, images)
+                modelsRepository.createModelImage(model, modelProgress, images)
                 refresh()
                 withContext(Dispatchers.Main) {
                     callback()

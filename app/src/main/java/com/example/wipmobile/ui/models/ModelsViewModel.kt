@@ -53,6 +53,23 @@ class ModelsViewModel @Inject constructor(
             is ModelsEvent.ApplyFilter -> {
                 refreshList()
             }
+
+            is ModelsEvent.ResetLoaded -> {
+                models = emptyList()
+                userStatuses = emptyList()
+                modelGroups = emptyList()
+                uiState.value = uiState.value.copy(
+                    models = models,
+                    isLoading = false,
+                    loaded = false,
+                    availableStatuses = userStatuses,
+                    availableGroups = modelGroups,
+                    pageSize = 1,
+                    pagesCount = 0,
+                    count = 0,
+                    currentPage = 1
+                )
+            }
         }
     }
 

@@ -5,7 +5,6 @@ import android.content.ContextWrapper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -67,7 +66,7 @@ fun ModelsScreenPreview() {
     val model1 = Model(
         id = 1,
         name = "test 1",
-        status = UserStatus(id=1, name = "test status1"),
+        status = UserStatus(id=1, name = "test status1", order = 0),
         lastImagePath = null,
         hoursSpent = 90.1,
         battleScribeUnit = BattleScribeUnit(id=1, name = "BattleSribe badge text"),
@@ -82,7 +81,7 @@ fun ModelsScreenPreview() {
     val model2 = Model(
         id = 1,
         name = "test 1",
-        status = UserStatus(id=1, name = "test status2"),
+        status = UserStatus(id=1, name = "test status2", order = 0),
         lastImagePath = "path to img",
         hoursSpent = 90.1,
         battleScribeUnit = null,
@@ -97,7 +96,7 @@ fun ModelsScreenPreview() {
     val model3 = Model(
         id = 1,
         name = "test 1",
-        status = UserStatus(id=1, name = "test status3"),
+        status = UserStatus(id=1, name = "test status3", order = 0),
         lastImagePath = null,
         hoursSpent = 90.1,
         battleScribeUnit = null,

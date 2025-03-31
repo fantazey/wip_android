@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.wipmobile"
-        minSdk = 26
+        minSdk = 23
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -33,6 +33,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "1.8"
@@ -83,6 +84,7 @@ dependencies {
     implementation(libs.com.google.dagger.dagger)
     implementation(libs.com.github.bumptech.glide)
     implementation(libs.com.github.bumptech.glide.compose)
+    coreLibraryDesugaring(libs.com.android.tools.desuagar.jdk.libs)
     ksp(libs.com.github.bumptech.glide.compiler)
     ksp(libs.com.github.bumptech.glide.annotations)
     ksp(libs.com.google.dagger.compiler)

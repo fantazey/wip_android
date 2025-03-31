@@ -12,4 +12,5 @@ sealed class ModelsEvent {
     class ChangeUserStatusFilter(val values: List<UserStatus>): ModelsEvent()
     class ChangeSearchQuery(val value: String): ModelsEvent()
     data object ApplyFilter: ModelsEvent()
+    data object ResetLoaded: ModelsEvent()
 }

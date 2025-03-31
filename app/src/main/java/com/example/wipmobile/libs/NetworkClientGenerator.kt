@@ -15,7 +15,7 @@ class NetworkClientGenerator {
                 okHttpClientBuilder.addInterceptor(it)
             }
             okHttpClientBuilder.connectTimeout(30L, TimeUnit.SECONDS)
-            okHttpClientBuilder.readTimeout(30L, TimeUnit.SECONDS)
+            okHttpClientBuilder.readTimeout(300L, TimeUnit.SECONDS)
             val okHttpClient = okHttpClientBuilder.build()
             val retrofit = Retrofit.Builder()
                 .baseUrl(baseUrl)

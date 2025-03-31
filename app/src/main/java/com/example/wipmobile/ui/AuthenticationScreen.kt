@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.wipmobile.data.dto.SignUpForm
 import com.example.wipmobile.ui.auth.AuthenticationUiState
 import com.example.wipmobile.ui.auth.AuthenticationEvent
 import com.example.wipmobile.ui.auth.AuthenticationForm
@@ -35,17 +36,24 @@ fun AuthenticationScreen(
         } else {
             AuthenticationForm(
                 modifier = Modifier.fillMaxSize(),
-                login = authenticationState.login,
-                password = authenticationState.password,
-                enableAuthentication = authenticationState.isFormValid(),
-                onLoginChanged = { newLogin ->
-                    handleEvent(AuthenticationEvent.LoginChanged(newLogin))
+                onAuthenticate = { login: String, password: String ->
+                    handleEvent(
+                        AuthenticationEvent.Authenticate(
+                            login,
+                            password,
+                            successAuthCallback
+                        )
+                    )
                 },
-                onPasswordChanged = {
-                    handleEvent(AuthenticationEvent.PasswordChanged(it))
-                },
-                onAuthenticate = {
-                    handleEvent(AuthenticationEvent.Authenticate(successAuthCallback))
+                onRegister = { login: String, password: String ->
+                    handleEvent(
+                        AuthenticationEvent.SignUp(
+                            SignUpForm(
+                                username = login,
+                                password = password
+                            ), successAuthCallback
+                        )
+                    )
                 }
             )
             authenticationState.error?.let {
@@ -65,9 +73,7 @@ fun AuthenticationScreen(
 @Preview
 fun AuthenticationScreenPreview() {
     val uiState = AuthenticationUiState(
-        isLoading = true,
-        login = "test",
-        password = "asdasdasd",
+        isLoading = false,
         error = null
     )
     WipMobileTheme {
